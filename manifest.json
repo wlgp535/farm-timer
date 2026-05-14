@@ -2,7 +2,7 @@
   "name": "두두타 잡초 타이머",
   "short_name": "두두타 잡초 타이머",
   "description": "두근두근타운 5성 작물 잡초 타이머",
-  "start_url": "/",
+  "start_url": "/farm-timer/",
   "display": "standalone",
   "background_color": "#0a1e07",
   "theme_color": "#0f2d0a",
