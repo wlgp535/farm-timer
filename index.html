@@ -216,7 +216,7 @@ function schedAlarms(){
         alarms[t.id+'_'+s]=setTimeout(()=>{
           t.done.push(s); saveTimers();
           if(s==='mature'){
-            if(t.notifHarvest) toast(`🎉 ${t.n} 수확!`, 'harvest');
+            if(t.notifHarvest) toast(`🎉 ${t.n} 성숙!`, 'harvest');
           } else {
             if(t.notifWeed) toast(`🌿 ${t.n} 잡초!`, 'weed');
           }
@@ -304,8 +304,7 @@ function renderTimers(){
     const pct=Math.min(100, ((now-t.planted)/(t.times.mature-t.planted))*100);
     const steps=['w1','w2','w3','w4','mature'].map(s=>{
       const isDone=now>t.times[s];
-      // MATURE 단어를 수확으로 변경
-      const stepName = (s==='mature') ? '수확' : s.toUpperCase();
+      const stepName = (s==='mature') ? '성숙' : s.toUpperCase();
       return `<div class="step ${isDone?'done':''}"><div class="s-name">${stepName}</div><div class="s-time">${isDone?'✓':fmt(t.times[s]-now)}</div></div>`;
     }).join('');
     return `<div class="timer-card ${now>t.times.mature?'harvest-glow':''}">
@@ -370,7 +369,7 @@ function sendAlarmsToSW(){
     ['w1','w2','w3','w4','mature'].forEach(s=>{
       if(t.times[s]>Date.now() && !t.done.includes(s)){
         if((s==='mature' && t.notifHarvest) || (s!=='mature' && t.notifWeed)){
-          alarmList.push({ id:t.id+'_'+s, time:t.times[s], title:s==='mature'?'🎉 수확 완료!':`🌿 잡초 발생!`, body:t.n + (t.label?' ('+t.label+')':'') });
+          alarmList.push({ id:t.id+'_'+s, time:t.times[s], title:s==='mature'?'🎉 성숙 완료!':`🌿 잡초 발생!`, body:t.n + (t.label?' ('+t.label+')':'') });
         }
       }
     });
