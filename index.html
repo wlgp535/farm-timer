@@ -49,7 +49,6 @@ body{
   border-bottom:1px solid var(--border);
   position:sticky;top:0;z-index:100;
 }
-.topbar-left{}
 .topbar-title{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-0.3px;}
 .topbar-sub{font-size:11px;color:var(--text-dim);margin-top:2px;}
 .notif-btn{
@@ -110,7 +109,6 @@ body{
   font-family:'Nanum Gothic',sans-serif;transition:all 0.2s;
 }
 .mode-tab.on{background:var(--green-700);border-color:var(--green-400);color:var(--green-50);}
-.mode-tab:active{transform:scale(0.97);}
 .time-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:8px;}
 .time-lbl{font-size:10px;color:var(--text-dim);text-align:center;margin-bottom:3px;}
 .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;}
@@ -169,17 +167,6 @@ body{
 .prog-bar{height:3px;background:var(--bg);border-radius:2px;margin-top:10px;overflow:hidden;}
 .prog-fill{height:100%;background:var(--green-400);border-radius:2px;transition:width 1s linear;}
 
-/* EMPTY */
-.empty{text-align:center;padding:50px 20px;color:var(--text-dim);}
-.empty-ico{font-size:52px;margin-bottom:14px;}
-.empty-txt{font-size:13px;line-height:1.7;}
-
-/* HELP */
-.help-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
-.help-ttl{font-size:13px;font-weight:800;color:var(--green-200);margin-bottom:10px;}
-.help-row{display:flex;gap:10px;font-size:12px;color:var(--text-muted);line-height:1.7;padding:2px 0;}
-.hk{color:var(--green-300);font-weight:800;flex-shrink:0;min-width:28px;}
-
 /* TOAST */
 .toast-wrap{position:fixed;top:0;left:50%;transform:translateX(-50%);width:92%;max-width:440px;z-index:9999;pointer-events:none;padding-top:calc(80px + var(--safe-top));}
 .toast{
@@ -209,6 +196,15 @@ body{
 .nav-tab.on .nav-lbl{color:var(--green-200);}
 .nav-bdg{display:none;background:var(--amber-500);color:#fff;font-size:9px;border-radius:10px;padding:1px 5px;font-weight:800;vertical-align:middle;margin-left:2px;}
 .nav-bdg.show{display:inline-block;}
+
+/* EMPTY/HELP */
+.empty{text-align:center;padding:50px 20px;color:var(--text-dim);}
+.empty-ico{font-size:52px;margin-bottom:14px;}
+.empty-txt{font-size:13px;line-height:1.7;}
+.help-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
+.help-ttl{font-size:13px;font-weight:800;color:var(--green-200);margin-bottom:10px;}
+.help-row{display:flex;gap:10px;font-size:12px;color:var(--text-muted);line-height:1.7;padding:2px 0;}
+.hk{color:var(--green-300);font-weight:800;flex-shrink:0;min-width:28px;}
 </style>
 </head>
 <body>
@@ -263,9 +259,14 @@ let sel=null;
 let tab='add';
 let useRem=false;
 let repeat=false;
+// 신규 알림 개별 설정 상태
+let notifWeed=true;
+let notifHarvest=true;
+
 let alarms={};
 let tickId=null;
 let aCtx=null;
+let swReg=null;
 
 function loadTimers(){
   try{
@@ -275,11 +276,9 @@ function loadTimers(){
     timers=timers.filter(t=>now<t.times.w4+7200000);
   }catch(e){timers=[];}
 }
-
 function saveTimers(){
   try{localStorage.setItem('dkdk5_timers',JSON.stringify(timers));}catch(e){}
 }
-
 function calcTimes(planted,mins){
   const tot=mins*60000;
   return{
@@ -290,7 +289,6 @@ function calcTimes(planted,mins){
     w4:planted+tot+60000,
   };
 }
-
 function fmt(ms){
   if(ms<=0)return'완료';
   const s=Math.floor(ms/1000);
@@ -300,18 +298,13 @@ function fmt(ms){
   if(h>0)return`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
   return`${m}:${String(sc).padStart(2,'0')}`;
 }
-
 function fmtD(m){
   if(m<60)return m+'분';
   if(m%60===0)return(m/60)+'시간';
   return Math.floor(m/60)+'시간 '+(m%60)+'분';
 }
 
-function ac(){
-  if(!aCtx)aCtx=new(window.AudioContext||window.webkitAudioContext)();
-  return aCtx;
-}
-
+function ac(){if(!aCtx)aCtx=new(window.AudioContext||window.webkitAudioContext)();return aCtx;}
 function beep(type){
   try{
     const c=ac();
@@ -342,7 +335,6 @@ function notify(title,body){
     try{new Notification(title,{body,silent:false});}catch(e){}
   }
 }
-
 function toast(msg,type=''){
   const w=document.getElementById('toasts');
   const d=document.createElement('div');
@@ -353,10 +345,9 @@ function toast(msg,type=''){
 }
 
 let notifEnabled=localStorage.getItem('dkdk_notif')!=='off';
-
 async function reqNotif(){
   if(!('Notification' in window)){toast('이 브라우저는 알림 미지원');return;}
-  if(Notification.permission==='denied'){toast('⚠️ 브라우저 설정에서 알림 차단을 해제해주세요.');return;}
+  if(Notification.permission==='denied'){toast('⚠️ 설정에서 알림 차단을 해제해주세요.');return;}
   if(Notification.permission!=='granted'){
     const p=await Notification.requestPermission();
     if(p!=='granted'){toast('알림을 허용해주세요.');updNBtn();return;}
@@ -367,7 +358,6 @@ async function reqNotif(){
   if(notifEnabled){toast('🔔 알림 ON');sendAlarmsToSW();}
   else toast('🔕 알림 OFF');
 }
-
 function updNBtn(){
   const b=document.getElementById('notifBtn');
   if(!b)return;
@@ -387,31 +377,26 @@ function schedAlarms(){
       if(ms>0&&!t.done.includes(s)){
         const key=t.id+'_'+s;
         alarms[key]=setTimeout(()=>{
-          if(!timers.find(x=>x.id===t.id))return;
           const idx=timers.findIndex(x=>x.id===t.id);
           if(idx>=0&&!timers[idx].done.includes(s)){
             timers[idx].done.push(s);saveTimers();
           }
           const lb=t.label?` (${t.label})`:'';
+          
           if(s==='mature'){
-            if(notifEnabled)notify(`🎉 ${t.n} 수확!`,'수확할 시간이에요!');
-            beep('harvest');
-            toast(`🎉 ${t.n}${lb} 수확 시간!`,'harvest');
-            if(t.repeat){
-              let cnt=0;
-              const ri=setInterval(()=>{
-                if(cnt++>=4){clearInterval(ri);return;}
-                beep('harvest');
-                if(notifEnabled)notify(`🎉 ${t.n} 수확!`,`아직 수확 안 하셨어요! (${cnt+1}번째 알림)`);
-              },10000);
+            // 성숙 알림이 켜져있을 때만 작동
+            if(t.notifHarvest){
+              if(notifEnabled)notify(`🎉 ${t.n} 수확!`,'수확할 시간이에요!');
+              beep('harvest');
+              toast(`🎉 ${t.n}${lb} 수확 시간!`,'harvest');
             }
           }else{
-            const wn=s==='w1'?1:s==='w2'?2:s==='w3'?3:4;
-            if(notifEnabled)notify(`🌿 ${t.n} W${wn} 잡초!`,`지금 바로 잡초를 제거하세요!`);
-            beep('weed');
-            toast(`🌿 ${t.n}${lb} W${wn} 잡초 제거!`,'weed');
-            if(t.repeat&&s!=='w4'){
-              setTimeout(()=>{beep('weed');if(notifEnabled)notify(`🌿 ${t.n} W${wn} 잡초!`,'아직 제거 안 하셨어요!');},12000);
+            // 잡초 알림이 켜져있을 때만 작동
+            if(t.notifWeed){
+              const wn=s==='w1'?1:s==='w2'?2:s==='w3'?3:4;
+              if(notifEnabled)notify(`🌿 ${t.n} W${wn} 잡초!`,`지금 바로 잡초를 제거하세요!`);
+              beep('weed');
+              toast(`🌿 ${t.n}${lb} W${wn} 잡초 제거!`,'weed');
             }
           }
           if(tab==='timers')renderTimers();
@@ -437,58 +422,49 @@ function addTimer(){
     planted=Date.now();
   }
   const id=Date.now()+'_'+Math.random().toString(36).substr(2,5);
-  timers.push({id,cropId:crop.id,e:crop.e,n:crop.n,label:label.trim().slice(0,20),planted,times:calcTimes(planted,crop.m),repeat,done:[]});
+  // 타이머 객체에 개별 알림 설정 저장
+  timers.push({
+    id,cropId:crop.id,e:crop.e,n:crop.n,label:label.trim().slice(0,20),
+    planted,times:calcTimes(planted,crop.m),repeat,
+    notifWeed,notifHarvest,
+    done:[]
+  });
   saveTimers();
   schedAlarms();
-  if(typeof sendAlarmsToSW==='function') sendAlarmsToSW();
+  sendAlarmsToSW();
   toast(`🌱 ${crop.n} 타이머 시작!`);
-  // 탭 전환
-  tab='timers';
-  document.getElementById('nt-add').className='nav-tab';
-  document.getElementById('nt-timers').className='nav-tab on';
-  document.getElementById('nt-help').className='nav-tab';
-  renderTimers();
+  goTab('timers');
 }
 
 function delTimer(id){
   timers=timers.filter(t=>t.id!==id);
-  ['w1','w2','w3','w4','mature'].forEach(s=>{
-    if(alarms[id+'_'+s])clearTimeout(alarms[id+'_'+s]);
-  });
+  ['w1','w2','w3','w4','mature'].forEach(s=>{if(alarms[id+'_'+s])clearTimeout(alarms[id+'_'+s]);});
   saveTimers();renderTimers();updBdg();
 }
-
 function updBdg(){
-  const b=document.getElementById('bdg');
-  if(!b)return;
+  const b=document.getElementById('bdg');if(!b)return;
   if(timers.length>0){b.textContent=timers.length;b.className='nav-bdg show';}
   else b.className='nav-bdg';
 }
-
 function goTab(t){
   tab=t;
-  ['add','timers','help'].forEach(x=>{
-    document.getElementById('nt-'+x).className='nav-tab'+(t===x?' on':'');
-  });
+  ['add','timers','help'].forEach(x=>{document.getElementById('nt-'+x).className='nav-tab'+(t===x?' on':'');});
   if(t==='add')renderAdd();
   else if(t==='timers')renderTimers();
   else renderHelp();
 }
-
 function cropCard(c){
   const isSel=sel===c.id;
-  let cls='crop-card';
-  if(c.season)cls+=' season';
-  if(c.coming)cls+=' coming';
-  if(isSel)cls+=' sel';
+  let cls='crop-card'+(c.season?' season':'')+(c.coming?' coming':'')+(isSel?' sel':'');
   const badge=c.season?'<span class="crop-badge">시즌🌿</span>':c.coming?'<span class="crop-badge">출시예정</span>':'';
   const click=c.coming?'':`onclick="pickCrop('${c.id}')"`;
   return`<div class="${cls}" ${click}>${badge}<span class="crop-emoji">${c.e}</span><div class="crop-name">${c.n}</div><div class="crop-dur">${c.coming?'출시 예정':fmtD(c.m)}</div></div>`;
 }
-
 function pickCrop(id){sel=id;renderAdd();}
 function setMode(r){useRem=r;renderAdd();}
-function togRepeat(){repeat=!repeat;const t=document.getElementById('repTog');if(t)t.className='toggle'+(repeat?' on':'');}
+function togRepeat(){repeat=!repeat;renderAdd();}
+function togWeed(){notifWeed=!notifWeed;renderAdd();}
+function togHarvest(){notifHarvest=!notifHarvest;renderAdd();}
 
 function renderAdd(){
   const m=document.getElementById('main');
@@ -504,7 +480,7 @@ function renderAdd(){
       <p class="sec">⚙️ 설정</p>
       <div class="mode-tabs">
         <div class="mode-tab${!useRem?' on':''}" onclick="setMode(false)">🌱 지금 심기</div>
-        <div class="mode-tab${useRem?' on':''}" onclick="setMode(true)">⏳ 남은 시간으로</div>
+        <div class="mode-tab${useRem?' on':''}" onclick="setMode(true)">⏳ 남은 시간</div>
       </div>
       ${useRem?`
       <label class="form-label">남은 성숙 시간 입력</label>
@@ -514,6 +490,16 @@ function renderAdd(){
         <div><div class="time-lbl">초</div><input class="form-input" id="rs" type="number" min="0" max="59" placeholder="0" style="text-align:center;padding:10px 6px;"></div>
       </div>
       <div style="height:12px"></div>`:''}
+      
+      <div class="toggle-row">
+        <div class="toggle-info"><div class="tl-main">🌿 잡초 알림</div></div>
+        <div class="toggle${notifWeed?' on':''}" onclick="togWeed()"></div>
+      </div>
+      <div class="toggle-row" style="margin-bottom:10px">
+        <div class="toggle-info"><div class="tl-main">✨ 성숙 완료 알림</div></div>
+        <div class="toggle${notifHarvest?' on':''}" onclick="togHarvest()"></div>
+      </div>
+
       <label class="form-label">🏷️ 라벨 (선택)</label>
       <input class="form-input" id="lbl" type="text" placeholder="예: 내 농장 1번칸" maxlength="20" style="margin-bottom:14px;">
       <div class="toggle-row">
@@ -521,7 +507,7 @@ function renderAdd(){
           <div class="tl-main">확인할 때까지 계속 울리기</div>
           <div class="tl-sub">알림을 한 번 더 반복 전송</div>
         </div>
-        <div class="toggle${repeat?' on':''}" id="repTog" onclick="togRepeat()"></div>
+        <div class="toggle${repeat?' on':''}" onclick="togRepeat()"></div>
       </div>
     </div>
     <button class="btn-plant" onclick="addTimer()">🌱 작물 심기</button>
@@ -547,11 +533,8 @@ function renderTimers(){
       const st=t.times[s];
       const isDone=now>st;
       const isNext=!isDone&&STEPS.find(ss=>now<t.times[ss])===s;
-      let cls='step';
-      if(isDone)cls+=' done';
-      else if(isNext)cls+=' active';
-      const rem=st-now;
-      return`<div class="${cls}"><div class="s-name">${SLBL[s]}</div><div class="s-time">${isDone?'✓':(rem>0?fmt(rem):'!')}</div></div>`;
+      let cls='step'+(isDone?' done':isNext?' active':'');
+      return`<div class="${cls}"><div class="s-name">${SLBL[s]}</div><div class="s-time">${isDone?'✓':(st-now>0?fmt(st-now):'!')}</div></div>`;
     }).join('');
     const lb=t.label?` · ${t.label}`:'';
     const nextS=STEPS.find(s=>!t.done.includes(s)&&now<t.times[s]);
@@ -575,77 +558,42 @@ function renderTimers(){
 function renderHelp(){
   const m=document.getElementById('main');
   m.innerHTML=`
-    <div class="help-card">
-      <div class="help-ttl">⭐ 5성 작물 조건</div>
-      <div class="help-row"><span class="hk">→</span>비료 1번 + 잡초 4번 제거가 필요해요.</div>
-      <div class="help-row"><span class="hk">→</span>W1~W4 잡초를 모두 제거해야 5성 확률이 올라가요.</div>
-    </div>
-    <div class="help-card">
-      <div class="help-ttl">🌱 잡초 시점</div>
-      <div class="help-row"><span class="hk">W1</span>자라는 시간의 1/3 지점</div>
-      <div class="help-row"><span class="hk">W2</span>자라는 시간의 2/3 지점</div>
-      <div class="help-row"><span class="hk">W3</span>성숙 약 1분 전</div>
-      <div class="help-row"><span class="hk">W4</span>성숙 약 1분 후</div>
-    </div>
-    <div class="help-card">
-      <div class="help-ttl">💡 W4 잡초 팁</div>
-      <div class="help-row"><span class="hk">!</span>W4는 성숙 이후 자라므로, 본인 계정으로 제거하면 작물도 같이 수확돼요.</div>
-      <div class="help-row"><span class="hk">→</span>친구/부계정으로 제거하거나, 가방을 가득 채운 뒤 잡초를 먼저 제거하세요.</div>
-    </div>
-    <div class="help-card">
-      <div class="help-ttl">🔔 알림 설정</div>
-      <div class="help-row"><span class="hk">→</span>잡초·수확 시점에 소리와 알림으로 알려줘요.</div>
-      <div class="help-row"><span class="hk">→</span>브라우저를 닫으면 알림이 멈춰요. 탭을 열어두거나 홈 화면에 추가하세요.</div>
-    </div>
-    <div class="help-card">
-      <div class="help-ttl">📱 홈 화면 앱으로 추가하는 법</div>
-      <div class="help-row"><span class="hk">iPhone</span>Safari → 하단 공유(□↑) 버튼 → "홈 화면에 추가"</div>
-      <div class="help-row"><span class="hk">Galaxy</span>Chrome → 주소창 우측 ⋮ 메뉴 → "앱 설치" 또는 "홈 화면에 추가"</div>
-    </div>
+    <div class="help-card"><div class="help-ttl">⭐ 5성 작물 조건</div><div class="help-row"><span class="hk">→</span>비료 1번 + 잡초 4번 제거가 필요해요.</div></div>
+    <div class="help-card"><div class="help-ttl">🌱 잡초 시점</div><div class="help-row"><span class="hk">W1/W2</span>1/3 및 2/3 지점</div><div class="help-row"><span class="hk">W3/W4</span>성숙 1분 전/후</div></div>
+    <div class="help-card"><div class="help-ttl">🔔 알림 설정</div><div class="help-row"><span class="hk">→</span>심기 시 잡초와 성숙 알림을 따로 켤 수 있어요.</div><div class="help-row"><span class="hk">→</span>브라우저를 닫으면 알림이 멈출 수 있으니 앱 설치(PWA)를 권장합니다.</div></div>
     <div style="height:20px"></div>
   `;
 }
 
-// ── Service Worker 등록 ──
-let swReg = null;
 async function registerSW(){
   if(!('serviceWorker' in navigator)) return;
-  try{
-    swReg = await navigator.serviceWorker.register('sw.js');
-    await navigator.serviceWorker.ready;
-  }catch(e){ console.warn('SW 등록 실패',e); }
+  try{swReg=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;}catch(e){}
 }
-
 function sendAlarmsToSW(){
   if(!swReg||!swReg.active||!notifEnabled) return;
   const now=Date.now();
-  const STEPS=['w1','w2','w3','w4','mature'];
   const alarmList=[];
   timers.forEach(t=>{
-    STEPS.forEach(s=>{
-      const ms=t.times[s]-now;
-      if(ms>0&&!t.done.includes(s)){
-        const lb=t.label?` (${t.label})`:'';
-        let title,body;
-        if(s==='mature'){title=`🎉 ${t.n}${lb} 수확!`;body='지금 바로 수확하세요!';}
-        else{const wn=s==='w1'?1:s==='w2'?2:s==='w3'?3:4;title=`🌿 ${t.n}${lb} W${wn} 잡초!`;body=`잡초를 제거하세요! (${wn}/4번째)`;}
-        alarmList.push({id:t.id+'_'+s,time:t.times[s],title,body});
+    ['w1','w2','w3','w4','mature'].forEach(s=>{
+      if(t.times[s]>now&&!t.done.includes(s)){
+        // 설정 체크
+        if((s==='mature'&&t.notifHarvest)||(s!=='mature'&&t.notifWeed)){
+          const lb=t.label?` (${t.label})`:'';
+          let title=s==='mature'?`🎉 ${t.n}${lb} 수확!`:`🌿 ${t.n}${lb} W${s.replace('w','')} 잡초!`;
+          alarmList.push({id:t.id+'_'+s,time:t.times[s],title,body:s==='mature'?'수확할 시간!':'잡초를 제거하세요!'});
+        }
       }
     });
   });
   swReg.active.postMessage({type:'SCHEDULE_ALARMS',alarms:alarmList});
 }
 
-// Init
 loadTimers();
-registerSW().then(()=>{ updNBtn(); schedAlarms(); sendAlarmsToSW(); });
+registerSW().then(()=>{updNBtn();schedAlarms();sendAlarmsToSW();});
 renderAdd();
 updBdg();
-tickId=setInterval(()=>{if(tab==='timers')renderTimers();},1000);
-
-document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden){schedAlarms();sendAlarmsToSW();if(tab==='timers')renderTimers();}
-});
+setInterval(()=>{if(tab==='timers')renderTimers();},1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){schedAlarms();sendAlarmsToSW();if(tab==='timers')renderTimers();}});
 </script>
 </body>
 </html>
