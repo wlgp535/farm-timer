@@ -289,26 +289,51 @@ function renderAdd(){
 }
 
 function renderTimers(){
-  const m=document.getElementById('main');
-  const b=document.getElementById('bdg');
-  b.textContent=timers.length; b.className='nav-bdg '+(timers.length?'show':'');
-  if(!timers.length){ m.innerHTML='<div class="empty">진행 중인 타이머가 없어요.</div>'; return; }
-  const now=Date.now();
-  m.innerHTML=timers.map(t=>{
-    const pct=Math.min(100, ((now-t.planted)/(t.times.mature-t.planted))*100);
-    const steps=['w1','w2','w3','w4','mature'].map(s=>{
-      const isDone=now>t.times[s];
-      const stepLabel = (s === 'mature') ? '수확' : s.toUpperCase(); return `<div class="step ${isDone?'done':''}"><div class="s-name">${s.toUpperCase()}</div><div class="s-time">${isDone?'✓':fmt(t.times[s]-now)}</div></div>`;
+  const m = document.getElementById('main');
+  const b = document.getElementById('bdg');
+  
+  // 배지 업데이트
+  b.textContent = timers.length; 
+  b.className = 'nav-bdg ' + (timers.length ? 'show' : '');
+  
+  if (!timers.length) { 
+    m.innerHTML = '<div class="empty" style="text-align:center;padding:40px;color:var(--text-dim);">진행 중인 타이머가 없어요.</div>'; 
+    return; 
+  }
+  
+  const now = Date.now();
+  
+  m.innerHTML = timers.map(t => {
+    // 진행도 계산 (0~100%)
+    const pct = Math.min(100, ((now - t.planted) / (t.times.mature - t.planted)) * 100);
+    
+    // 단계별(W1~W4, 성숙) 상태 생성
+    const steps = ['w1', 'w2', 'w3', 'w4', 'mature'].map(s => {
+      const isDone = now > t.times[s];
+      // 성숙 단계면 '성숙', 아니면 'W1' 식으로 표시
+      const stepLabel = (s === 'mature') ? '성숙' : s.toUpperCase(); 
+      
+      return `
+        <div class="step ${isDone ? 'done' : ''}">
+          <div class="s-name">${stepLabel}</div>
+          <div class="s-time">${isDone ? '✓' : fmt(t.times[s] - now)}</div>
+        </div>`;
     }).join('');
-    return `<div class="timer-card ${now>t.times.mature?'harvest-glow':''}">
-      <div class="th">
-        <span class="th-emoji">${t.e}</span>
-        <div class="th-info"><div class="th-name">${t.n} <small>${t.label}</small></div></div>
-        <button class="th-del" onclick="delTimer('${t.id}')">✕</button>
-      </div>
-      <div class="steps">${steps}</div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-    </div>`;
+    
+    return `
+      <div class="timer-card ${now > t.times.mature ? 'harvest-glow' : ''}">
+        <div class="th">
+          <span class="th-emoji">${t.e}</span>
+          <div class="th-info">
+            <div class="th-name">${t.n} <small style="color:var(--text-dim); margin-left:4px;">${t.label}</small></div>
+          </div>
+          <button class="th-del" onclick="delTimer('${t.id}')">✕</button>
+        </div>
+        <div class="steps">${steps}</div>
+        <div class="prog-bar">
+          <div class="prog-fill" style="width:${pct}%"></div>
+        </div>
+      </div>`;
   }).join('');
 }
 
