@@ -22,7 +22,6 @@
   --amber-800:#5c3008;--amber-700:#7a4a0a;--amber-600:#a06414;
   --amber-500:#c47f1e;--amber-400:#e09d30;--amber-300:#f0be60;
   --amber-200:#f5d898;--amber-100:#fdf0cc;--amber-50:#fffaea;
-  --red-600:#8b1a1a;--red-500:#b52222;--red-200:#f7c1c1;
   --bg:#0a1e07;--surface:#0f2d0a;--surface2:#1a4d14;--surface3:#2d5a27;
   --border:#2d5a27;--border2:#3d7a35;
   --text:#e0f5dc;--text-muted:#8ed080;--text-dim:#4e9a42;
@@ -59,14 +58,14 @@ body{
   cursor:pointer;transition:all 0.2s;white-space:nowrap;
 }
 .notif-btn.granted{background:var(--green-500);border-color:var(--green-300);color:#fff;}
-.notif-btn:active{transform:scale(0.96);}
 
 /* MAIN */
 .main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px;}
 .main::-webkit-scrollbar{display:none;}
 
 /* SECTION TITLE */
-.sec{font-size:11px;font-weight:800;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin:0 0 10px 2px;}
+.sec{font-size:11px;font-weight:800;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin:16px 0 10px 2px;}
+.sec:first-child{margin-top:0;}
 
 /* CROP GRID */
 .crop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:18px;}
@@ -76,10 +75,8 @@ body{
   cursor:pointer;transition:all 0.15s;
   position:relative;overflow:hidden;user-select:none;
 }
-.crop-card:active{transform:scale(0.96);}
 .crop-card.sel{border-color:var(--green-300);background:var(--surface2);box-shadow:0 0 0 2px var(--green-400);}
 .crop-card.season{border-color:var(--amber-600);}
-.crop-card.coming{opacity:0.38;cursor:default;pointer-events:none;}
 .crop-badge{
   position:absolute;top:7px;right:7px;
   font-size:9px;font-weight:800;padding:2px 6px;
@@ -90,7 +87,7 @@ body{
 .crop-name{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;}
 .crop-dur{font-size:11px;color:var(--text-muted);}
 
-/* FORM */
+/* FORM BOX */
 .form-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;}
 .form-label{display:block;font-size:11px;font-weight:800;color:var(--text-dim);letter-spacing:0.06em;margin-bottom:7px;}
 .form-input{
@@ -99,118 +96,56 @@ body{
   color:var(--text);font-size:14px;font-family:'Nanum Gothic',sans-serif;
   outline:none;transition:border-color 0.2s;
 }
-.form-input:focus{border-color:var(--green-300);}
-.form-input::placeholder{color:var(--text-dim);}
-.mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;}
-.mode-tab{
-  background:var(--bg);border:1px solid var(--border);border-radius:10px;
-  padding:11px 8px;text-align:center;cursor:pointer;
-  font-size:12px;font-weight:700;color:var(--text-muted);
-  font-family:'Nanum Gothic',sans-serif;transition:all 0.2s;
-}
-.mode-tab.on{background:var(--green-700);border-color:var(--green-400);color:var(--green-50);}
-.time-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:8px;}
-.time-lbl{font-size:10px;color:var(--text-dim);text-align:center;margin-bottom:3px;}
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;}
-.toggle-info .tl-main{font-size:13px;color:var(--text);font-weight:700;}
-.toggle-info .tl-sub{font-size:11px;color:var(--text-dim);margin-top:2px;}
-.toggle{width:48px;height:28px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:14px;position:relative;cursor:pointer;transition:all 0.25s;flex-shrink:0;}
-.toggle.on{background:var(--green-400);border-color:var(--green-300);}
-.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform 0.25s;box-shadow:0 1px 4px rgba(0,0,0,0.4);}
-.toggle.on::after{transform:translateX(20px);}
 
-/* BTN */
+/* TOGGLE 스타일 (잡초/성숙 알림용) */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-info .tl-main{font-size:13px;color:var(--text);font-weight:700;}
+.toggle{width:48px;height:26px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:13px;position:relative;cursor:pointer;transition:all 0.25s;}
+.toggle.on{background:var(--green-400);border-color:var(--green-300);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:19px;height:19px;background:#fff;border-radius:50%;transition:transform 0.25s;}
+.toggle.on::after{transform:translateX(22px);}
+
 .btn-plant{
   width:100%;background:var(--green-500);border:none;border-radius:14px;
   padding:17px;color:#fff;font-size:16px;font-weight:800;
   font-family:'Nanum Gothic',sans-serif;cursor:pointer;
-  transition:all 0.18s;display:flex;align-items:center;justify-content:center;gap:8px;
-  letter-spacing:-0.2px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
 }
-.btn-plant:active{transform:scale(0.98);background:var(--green-600);}
 
 /* TIMER CARDS */
-.timers-wrap{padding-bottom:8px;}
-.timer-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:16px;padding:14px;margin-bottom:11px;
-  transition:all 0.3s;
-}
-.timer-card.harvest-glow{
-  border-color:var(--amber-500);
-  box-shadow:0 0 16px rgba(196,127,30,0.25);
-  animation:hglow 2.5s ease-in-out infinite;
-}
+.timer-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:11px;}
+.timer-card.harvest-glow{border-color:var(--amber-500);animation:hglow 2.5s infinite;}
 @keyframes hglow{0%,100%{box-shadow:0 0 8px rgba(196,127,30,0.15)}50%{box-shadow:0 0 20px rgba(196,127,30,0.4)}}
 .th{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
-.th-emoji{font-size:24px;line-height:1;}
+.th-emoji{font-size:24px;}
 .th-info{flex:1;}
-.th-name{font-size:14px;font-weight:800;color:var(--text);}
-.th-label{font-size:11px;color:var(--text-muted);margin-top:1px;}
-.th-del{background:transparent;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;padding:4px 2px;line-height:1;font-family:sans-serif;}
-.th-del:active{color:#e24b4a;}
-.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
-.step{
-  background:var(--bg);border:1px solid var(--border);
-  border-radius:8px;padding:7px 3px;text-align:center;
-  transition:all 0.3s;
-}
-.step.done{background:var(--green-900);border-color:var(--green-700);}
-.step.active{background:var(--amber-800);border-color:var(--amber-500);animation:spulse 1.8s ease-in-out infinite;}
-@keyframes spulse{0%,100%{opacity:1}50%{opacity:0.6}}
-.s-name{font-size:9px;font-weight:800;color:var(--text-dim);margin-bottom:3px;}
-.s-time{font-size:10px;font-weight:800;color:var(--text);}
-.step.done .s-name{color:var(--green-300);}
-.step.done .s-time{color:var(--green-200);}
-.step.active .s-name{color:var(--amber-300);}
-.step.active .s-time{color:var(--amber-100);}
-.prog-bar{height:3px;background:var(--bg);border-radius:2px;margin-top:10px;overflow:hidden;}
-.prog-fill{height:100%;background:var(--green-400);border-radius:2px;transition:width 1s linear;}
+.th-name{font-size:14px;font-weight:800;}
+.th-del{background:transparent;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;}
+.prog-bar{height:4px;background:var(--bg);border-radius:2px;margin-top:10px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--green-400);transition:width 1s linear;}
+
+/* NAV */
+.nav{display:flex;background:var(--surface);border-top:1px solid var(--border);padding-bottom:var(--safe-bottom);flex-shrink:0;}
+.nav-tab{flex:1;padding:11px 8px 9px;text-align:center;cursor:pointer;border:none;background:transparent;}
+.nav-tab.on .nav-lbl{color:var(--green-200);}
+.nav-ico{font-size:22px;display:block;}
+.nav-lbl{font-size:10px;color:var(--text-dim);font-weight:700;}
+.nav-bdg{display:none;background:var(--amber-500);color:#fff;font-size:9px;border-radius:10px;padding:1px 5px;}
+.nav-bdg.show{display:inline-block;}
 
 /* TOAST */
 .toast-wrap{position:fixed;top:0;left:50%;transform:translateX(-50%);width:92%;max-width:440px;z-index:9999;pointer-events:none;padding-top:calc(80px + var(--safe-top));}
-.toast{
-  background:var(--surface2);border:1px solid var(--green-400);
-  border-radius:12px;padding:12px 16px;margin-bottom:8px;
-  color:var(--text);font-size:13px;font-weight:700;text-align:center;
-  animation:tin 0.3s ease;box-shadow:0 4px 24px rgba(0,0,0,0.5);
-}
+.toast{background:var(--surface2);border:1px solid var(--green-400);border-radius:12px;padding:12px 16px;margin-bottom:8px;color:var(--text);font-size:13px;font-weight:700;text-align:center;animation:tin 0.3s ease;}
+@keyframes tin{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
 .toast.weed{background:var(--amber-800);border-color:var(--amber-400);}
 .toast.harvest{background:var(--green-600);border-color:var(--green-200);}
-@keyframes tin{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
-
-/* NAV */
-.nav{
-  display:flex;background:var(--surface);
-  border-top:1px solid var(--border);
-  padding-bottom:var(--safe-bottom);flex-shrink:0;
-}
-.nav-tab{
-  flex:1;padding:11px 8px 9px;text-align:center;
-  cursor:pointer;border:none;background:transparent;
-  font-family:'Nanum Gothic',sans-serif;transition:background 0.15s;
-}
-.nav-tab:active{background:var(--surface2);}
-.nav-ico{font-size:22px;display:block;margin-bottom:2px;}
-.nav-lbl{font-size:10px;color:var(--text-dim);font-weight:700;}
-.nav-tab.on .nav-lbl{color:var(--green-200);}
-.nav-bdg{display:none;background:var(--amber-500);color:#fff;font-size:9px;border-radius:10px;padding:1px 5px;font-weight:800;vertical-align:middle;margin-left:2px;}
-.nav-bdg.show{display:inline-block;}
-
-/* EMPTY/HELP */
-.empty{text-align:center;padding:50px 20px;color:var(--text-dim);}
-.empty-ico{font-size:52px;margin-bottom:14px;}
-.empty-txt{font-size:13px;line-height:1.7;}
-.help-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
-.help-ttl{font-size:13px;font-weight:800;color:var(--green-200);margin-bottom:10px;}
-.help-row{display:flex;gap:10px;font-size:12px;color:var(--text-muted);line-height:1.7;padding:2px 0;}
-.hk{color:var(--green-300);font-weight:800;flex-shrink:0;min-width:28px;}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-left">
+  <div>
     <div class="topbar-title">🌻 두두타 잡초 타이머</div>
     <div class="topbar-sub">비료 1번 + 잡초 4번 = ⭐⭐⭐⭐⭐</div>
   </div>
@@ -218,22 +153,11 @@ body{
 </div>
 
 <div class="toast-wrap" id="toasts"></div>
-
 <div class="main" id="main"></div>
 
 <nav class="nav">
-  <button class="nav-tab on" onclick="goTab('add')" id="nt-add">
-    <span class="nav-ico">🌱</span>
-    <span class="nav-lbl">심기</span>
-  </button>
-  <button class="nav-tab" onclick="goTab('timers')" id="nt-timers">
-    <span class="nav-ico">⏱️</span>
-    <span class="nav-lbl">타이머 <span class="nav-bdg" id="bdg">0</span></span>
-  </button>
-  <button class="nav-tab" onclick="goTab('help')" id="nt-help">
-    <span class="nav-ico">❓</span>
-    <span class="nav-lbl">도움말</span>
-  </button>
+  <button class="nav-tab on" onclick="goTab('add')" id="nt-add"><span class="nav-ico">🌱</span><span class="nav-lbl">심기</span></button>
+  <button class="nav-tab" onclick="goTab('timers')" id="nt-timers"><span class="nav-ico">⏱️</span><span class="nav-lbl">타이머 <span class="nav-bdg" id="bdg">0</span></span></button>
 </nav>
 
 <script>
@@ -248,158 +172,73 @@ const CROPS=[
   {id:'eggplant',e:'🍆',n:'가지',m:420},
   {id:'lettuce',e:'🥬',n:'양상추',m:480},
   {id:'grape',e:'🍇',n:'포도',m:600},
-  {id:'corn',e:'🌽',n:'옥수수',m:720},
-  {id:'tea',e:'🍵',n:'찻잎',m:0,coming:true},
-  {id:'cacao',e:'🍫',n:'카카오',m:0,coming:true},
-  {id:'avocado',e:'🥑',n:'아보카도',m:0,coming:true},
+  {id:'corn',e:'🌽',n:'옥수수',m:720}
 ];
 
 let timers=[];
 let sel=null;
 let tab='add';
-let useRem=false;
-let repeat=false;
-// 신규 알림 개별 설정 상태
-let notifWeed=true;
-let notifHarvest=true;
+
+// 알림 개별 설정 전역 변수
+let globalNotifWeed = true;
+let globalNotifHarvest = true;
 
 let alarms={};
-let tickId=null;
-let aCtx=null;
 let swReg=null;
+let notifEnabled=localStorage.getItem('dkdk_notif')!=='off';
 
 function loadTimers(){
-  try{
-    const d=localStorage.getItem('dkdk5_timers');
-    if(d) timers=JSON.parse(d);
-    const now=Date.now();
-    timers=timers.filter(t=>now<t.times.w4+7200000);
-  }catch(e){timers=[];}
+  const d=localStorage.getItem('dkdk5_timers');
+  if(d) timers=JSON.parse(d);
+  const now=Date.now();
+  timers=timers.filter(t=>now < t.times.w4+7200000);
 }
-function saveTimers(){
-  try{localStorage.setItem('dkdk5_timers',JSON.stringify(timers));}catch(e){}
-}
+function saveTimers(){ localStorage.setItem('dkdk5_timers',JSON.stringify(timers)); }
+
 function calcTimes(planted,mins){
   const tot=mins*60000;
   return{
-    w1:planted+tot/3,
-    w2:planted+tot*2/3,
-    w3:planted+tot-60000,
-    mature:planted+tot,
-    w4:planted+tot+60000,
+    w1:planted+tot/3, w2:planted+tot*2/3, w3:planted+tot-60000,
+    mature:planted+tot, w4:planted+tot+60000
   };
 }
-function fmt(ms){
-  if(ms<=0)return'완료';
-  const s=Math.floor(ms/1000);
-  const h=Math.floor(s/3600);
-  const m=Math.floor((s%3600)/60);
-  const sc=s%60;
-  if(h>0)return`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
-  return`${m}:${String(sc).padStart(2,'0')}`;
-}
-function fmtD(m){
-  if(m<60)return m+'분';
-  if(m%60===0)return(m/60)+'시간';
-  return Math.floor(m/60)+'시간 '+(m%60)+'분';
-}
 
-function ac(){if(!aCtx)aCtx=new(window.AudioContext||window.webkitAudioContext)();return aCtx;}
-function beep(type){
-  try{
-    const c=ac();
-    if(type==='weed'){
-      [0,0.12,0.24].forEach((d,i)=>{
-        const o=c.createOscillator(),g=c.createGain();
-        o.connect(g);g.connect(c.destination);
-        o.frequency.value=[880,1100,880][i];
-        g.gain.setValueAtTime(0.25,c.currentTime+d);
-        g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d+0.15);
-        o.start(c.currentTime+d);o.stop(c.currentTime+d+0.15);
-      });
-    }else{
-      [0,0.18,0.36].forEach((d,i)=>{
-        const o=c.createOscillator(),g=c.createGain();
-        o.connect(g);g.connect(c.destination);
-        o.frequency.value=[523,659,784][i];
-        g.gain.setValueAtTime(0.3,c.currentTime+d);
-        g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d+0.25);
-        o.start(c.currentTime+d);o.stop(c.currentTime+d+0.25);
-      });
-    }
-  }catch(e){}
-}
-
-function notify(title,body){
-  if(Notification.permission==='granted'){
-    try{new Notification(title,{body,silent:false});}catch(e){}
-  }
-}
 function toast(msg,type=''){
   const w=document.getElementById('toasts');
   const d=document.createElement('div');
   d.className='toast '+(type||'');
   d.textContent=msg;
   w.appendChild(d);
-  setTimeout(()=>{d.style.transition='opacity 0.35s';d.style.opacity='0';setTimeout(()=>d.remove(),350);},3800);
+  setTimeout(()=>{d.remove();},4000);
 }
 
-let notifEnabled=localStorage.getItem('dkdk_notif')!=='off';
-async function reqNotif(){
-  if(!('Notification' in window)){toast('이 브라우저는 알림 미지원');return;}
-  if(Notification.permission==='denied'){toast('⚠️ 설정에서 알림 차단을 해제해주세요.');return;}
-  if(Notification.permission!=='granted'){
-    const p=await Notification.requestPermission();
-    if(p!=='granted'){toast('알림을 허용해주세요.');updNBtn();return;}
-  }
-  notifEnabled=!notifEnabled;
-  localStorage.setItem('dkdk_notif',notifEnabled?'on':'off');
-  updNBtn();
-  if(notifEnabled){toast('🔔 알림 ON');sendAlarmsToSW();}
-  else toast('🔕 알림 OFF');
+function reqNotif(){
+  Notification.requestPermission().then(p=>{
+    notifEnabled=(p==='granted');
+    localStorage.setItem('dkdk_notif',notifEnabled?'on':'off');
+    updNBtn();
+  });
 }
 function updNBtn(){
   const b=document.getElementById('notifBtn');
-  if(!b)return;
-  const p=('Notification' in window)?Notification.permission:'default';
-  if(p==='denied'){b.textContent='🔕 차단됨';b.className='notif-btn';}
-  else if(p==='granted'&&notifEnabled){b.textContent='🔔 알림 ON';b.className='notif-btn granted';}
-  else{b.textContent='🔕 알림 OFF';b.className='notif-btn';}
+  b.textContent = (Notification.permission==='granted'&&notifEnabled)?'🔔 알림 ON':'🔕 알림 OFF';
 }
 
 function schedAlarms(){
   Object.values(alarms).forEach(clearTimeout);
-  alarms={};
-  const steps=['w1','w2','w3','w4','mature'];
   timers.forEach(t=>{
-    steps.forEach(s=>{
+    ['w1','w2','w3','w4','mature'].forEach(s=>{
       const ms=t.times[s]-Date.now();
-      if(ms>0&&!t.done.includes(s)){
-        const key=t.id+'_'+s;
-        alarms[key]=setTimeout(()=>{
-          const idx=timers.findIndex(x=>x.id===t.id);
-          if(idx>=0&&!timers[idx].done.includes(s)){
-            timers[idx].done.push(s);saveTimers();
-          }
-          const lb=t.label?` (${t.label})`:'';
-          
+      if(ms>0 && !t.done.includes(s)){
+        alarms[t.id+'_'+s]=setTimeout(()=>{
+          t.done.push(s); saveTimers();
+          // 알림 개별 설정 체크
           if(s==='mature'){
-            // 성숙 알림이 켜져있을 때만 작동
-            if(t.notifHarvest){
-              if(notifEnabled)notify(`🎉 ${t.n} 수확!`,'수확할 시간이에요!');
-              beep('harvest');
-              toast(`🎉 ${t.n}${lb} 수확 시간!`,'harvest');
-            }
-          }else{
-            // 잡초 알림이 켜져있을 때만 작동
-            if(t.notifWeed){
-              const wn=s==='w1'?1:s==='w2'?2:s==='w3'?3:4;
-              if(notifEnabled)notify(`🌿 ${t.n} W${wn} 잡초!`,`지금 바로 잡초를 제거하세요!`);
-              beep('weed');
-              toast(`🌿 ${t.n}${lb} W${wn} 잡초 제거!`,'weed');
-            }
+            if(t.notifHarvest) toast(`🎉 ${t.n} 수확!`, 'harvest');
+          } else {
+            if(t.notifWeed) toast(`🌿 ${t.n} 잡초!`, 'weed');
           }
-          if(tab==='timers')renderTimers();
+          if(tab==='timers') renderTimers();
         },ms);
       }
     });
@@ -407,193 +246,114 @@ function schedAlarms(){
 }
 
 function addTimer(){
-  if(!sel){toast('작물을 먼저 선택해주세요!');return;}
+  if(!sel) return;
   const crop=CROPS.find(c=>c.id===sel);
-  const label=(document.getElementById('lbl')||{}).value||'';
-  let planted;
-  if(useRem){
-    const rh=parseInt((document.getElementById('rh')||{}).value)||0;
-    const rm=parseInt((document.getElementById('rm')||{}).value)||0;
-    const rs=parseInt((document.getElementById('rs')||{}).value)||0;
-    const remMs=(rh*3600+rm*60+rs)*1000;
-    if(remMs<=0){toast('남은 시간을 입력해주세요!');return;}
-    planted=Date.now()+remMs-(crop.m*60000);
-  }else{
-    planted=Date.now();
-  }
+  const label=document.getElementById('lbl').value||'';
   const id=Date.now()+'_'+Math.random().toString(36).substr(2,5);
-  // 타이머 객체에 개별 알림 설정 저장
+  
   timers.push({
-    id,cropId:crop.id,e:crop.e,n:crop.n,label:label.trim().slice(0,20),
-    planted,times:calcTimes(planted,crop.m),repeat,
-    notifWeed,notifHarvest,
+    id, n:crop.n, e:crop.e, label:label.trim(),
+    planted:Date.now(), times:calcTimes(Date.now(), crop.m),
+    notifWeed: globalNotifWeed,
+    notifHarvest: globalNotifHarvest,
     done:[]
   });
-  saveTimers();
-  schedAlarms();
-  sendAlarmsToSW();
-  toast(`🌱 ${crop.n} 타이머 시작!`);
+  
+  saveTimers(); schedAlarms(); sendAlarmsToSW();
+  toast(`🌱 ${crop.n} 시작!`);
   goTab('timers');
 }
 
-function delTimer(id){
-  timers=timers.filter(t=>t.id!==id);
-  ['w1','w2','w3','w4','mature'].forEach(s=>{if(alarms[id+'_'+s])clearTimeout(alarms[id+'_'+s]);});
-  saveTimers();renderTimers();updBdg();
-}
-function updBdg(){
-  const b=document.getElementById('bdg');if(!b)return;
-  if(timers.length>0){b.textContent=timers.length;b.className='nav-bdg show';}
-  else b.className='nav-bdg';
-}
 function goTab(t){
   tab=t;
-  ['add','timers','help'].forEach(x=>{document.getElementById('nt-'+x).className='nav-tab'+(t===x?' on':'');});
-  if(t==='add')renderAdd();
-  else if(t==='timers')renderTimers();
-  else renderHelp();
+  document.getElementById('nt-add').className='nav-tab'+(t==='add'?' on':'');
+  document.getElementById('nt-timers').className='nav-tab'+(t==='timers'?' on':'');
+  if(t==='add') renderAdd(); else renderTimers();
 }
-function cropCard(c){
-  const isSel=sel===c.id;
-  let cls='crop-card'+(c.season?' season':'')+(c.coming?' coming':'')+(isSel?' sel':'');
-  const badge=c.season?'<span class="crop-badge">시즌🌿</span>':c.coming?'<span class="crop-badge">출시예정</span>':'';
-  const click=c.coming?'':`onclick="pickCrop('${c.id}')"`;
-  return`<div class="${cls}" ${click}>${badge}<span class="crop-emoji">${c.e}</span><div class="crop-name">${c.n}</div><div class="crop-dur">${c.coming?'출시 예정':fmtD(c.m)}</div></div>`;
-}
-function pickCrop(id){sel=id;renderAdd();}
-function setMode(r){useRem=r;renderAdd();}
-function togRepeat(){repeat=!repeat;renderAdd();}
-function togWeed(){notifWeed=!notifWeed;renderAdd();}
-function togHarvest(){notifHarvest=!notifHarvest;renderAdd();}
+
+function pickCrop(id){ sel=id; renderAdd(); }
+function togWeed(){ globalNotifWeed=!globalNotifWeed; renderAdd(); }
+function togHarvest(){ globalNotifHarvest=!globalNotifHarvest; renderAdd(); }
 
 function renderAdd(){
   const m=document.getElementById('main');
-  const sc=CROPS.filter(c=>c.season);
-  const nc=CROPS.filter(c=>!c.season&&!c.coming);
-  const cc=CROPS.filter(c=>c.coming);
   m.innerHTML=`
-    <p class="sec">🌿 시즌 작물</p>
-    <div class="crop-grid">${sc.map(cropCard).join('')}</div>
-    <p class="sec">🌾 일반 작물</p>
-    <div class="crop-grid">${[...nc,...cc].map(cropCard).join('')}</div>
+    <p class="sec">🌿 작물 선택</p>
+    <div class="crop-grid">${CROPS.map(c=>`
+      <div class="crop-card ${c.id===sel?'sel':''} ${c.season?'season':''}" onclick="pickCrop('${c.id}')">
+        <span class="crop-emoji">${c.e}</span>
+        <div class="crop-name">${c.n}</div>
+        <div class="crop-dur">${c.m}분</div>
+      </div>`).join('')}</div>
+    
     <div class="form-box">
-      <p class="sec">⚙️ 설정</p>
-      <div class="mode-tabs">
-        <div class="mode-tab${!useRem?' on':''}" onclick="setMode(false)">🌱 지금 심기</div>
-        <div class="mode-tab${useRem?' on':''}" onclick="setMode(true)">⏳ 남은 시간</div>
-      </div>
-      ${useRem?`
-      <label class="form-label">남은 성숙 시간 입력</label>
-      <div class="time-row">
-        <div><div class="time-lbl">시간</div><input class="form-input" id="rh" type="number" min="0" max="23" placeholder="0" style="text-align:center;padding:10px 6px;"></div>
-        <div><div class="time-lbl">분</div><input class="form-input" id="rm" type="number" min="0" max="59" placeholder="0" style="text-align:center;padding:10px 6px;"></div>
-        <div><div class="time-lbl">초</div><input class="form-input" id="rs" type="number" min="0" max="59" placeholder="0" style="text-align:center;padding:10px 6px;"></div>
-      </div>
-      <div style="height:12px"></div>`:''}
-      
+      <p class="sec" style="margin-top:0">⚙️ 알림 설정</p>
       <div class="toggle-row">
         <div class="toggle-info"><div class="tl-main">🌿 잡초 알림</div></div>
-        <div class="toggle${notifWeed?' on':''}" onclick="togWeed()"></div>
+        <div class="toggle ${globalNotifWeed?'on':''}" onclick="togWeed()"></div>
       </div>
-      <div class="toggle-row" style="margin-bottom:10px">
-        <div class="toggle-info"><div class="tl-main">✨ 성숙 완료 알림</div></div>
-        <div class="toggle${notifHarvest?' on':''}" onclick="togHarvest()"></div>
-      </div>
-
-      <label class="form-label">🏷️ 라벨 (선택)</label>
-      <input class="form-input" id="lbl" type="text" placeholder="예: 내 농장 1번칸" maxlength="20" style="margin-bottom:14px;">
       <div class="toggle-row">
-        <div class="toggle-info">
-          <div class="tl-main">확인할 때까지 계속 울리기</div>
-          <div class="tl-sub">알림을 한 번 더 반복 전송</div>
-        </div>
-        <div class="toggle${repeat?' on':''}" onclick="togRepeat()"></div>
+        <div class="toggle-info"><div class="tl-main">✨ 성숙 완료 알림</div></div>
+        <div class="toggle ${globalNotifHarvest?'on':''}" onclick="togHarvest()"></div>
       </div>
+      <div style="height:15px"></div>
+      <label class="form-label">🏷️ 라벨</label>
+      <input class="form-input" id="lbl" type="text" placeholder="예: 1번 밭" maxlength="10">
     </div>
-    <button class="btn-plant" onclick="addTimer()">🌱 작물 심기</button>
-    <div style="height:24px"></div>
+    <button class="btn-plant" onclick="addTimer()">🌱 타이머 시작</button>
   `;
 }
 
 function renderTimers(){
   const m=document.getElementById('main');
-  updBdg();
-  if(timers.length===0){
-    m.innerHTML=`<div class="empty"><div class="empty-ico">🌱</div><div class="empty-txt">아직 심은 작물이 없어요.<br>심기 탭에서 작물을 추가해보세요!</div></div>`;
-    return;
-  }
-  const now=Date.now();
-  const STEPS=['w1','w2','w3','w4','mature'];
-  const SLBL={w1:'W1',w2:'W2',w3:'W3',w4:'W4',mature:'수확'};
-  const html=timers.map(t=>{
-    const tot=t.times.mature-t.planted;
-    const pct=Math.min(100,Math.max(0,(now-t.planted)/tot*100));
-    const harvested=now>t.times.mature;
-    const stepsHtml=STEPS.map(s=>{
-      const st=t.times[s];
-      const isDone=now>st;
-      const isNext=!isDone&&STEPS.find(ss=>now<t.times[ss])===s;
-      let cls='step'+(isDone?' done':isNext?' active':'');
-      return`<div class="${cls}"><div class="s-name">${SLBL[s]}</div><div class="s-time">${isDone?'✓':(st-now>0?fmt(st-now):'!')}</div></div>`;
-    }).join('');
-    const lb=t.label?` · ${t.label}`:'';
-    const nextS=STEPS.find(s=>!t.done.includes(s)&&now<t.times[s]);
-    const nextLbl=nextS?(nextS==='mature'?'수확까지 '+fmt(t.times.mature-now):`W${nextS.replace('w','')} 잡초까지 `+fmt(t.times[nextS]-now)):'모두 완료';
-    return`<div class="timer-card${harvested?' harvest-glow':''}">
+  const b=document.getElementById('bdg');
+  b.textContent=timers.length; b.className='nav-bdg '+(timers.length?'show':'');
+  if(!timers.length){ m.innerHTML='<div class="empty">진행 중인 타이머가 없어요.</div>'; return; }
+  
+  m.innerHTML=timers.map(t=>{
+    const now=Date.now();
+    const pct=Math.min(100, ((now-t.planted)/(t.times.mature-t.planted))*100);
+    return `<div class="timer-card ${now>t.times.mature?'harvest-glow':''}">
       <div class="th">
         <span class="th-emoji">${t.e}</span>
-        <div class="th-info">
-          <div class="th-name">${t.n}${lb?`<span style="color:var(--text-dim);font-size:11px">${lb}</span>`:''}</div>
-          <div class="th-label">${nextLbl}</div>
-        </div>
+        <div class="th-info"><div class="th-name">${t.n} <small>${t.label}</small></div></div>
         <button class="th-del" onclick="delTimer('${t.id}')">✕</button>
       </div>
-      <div class="steps">${stepsHtml}</div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${pct.toFixed(1)}%"></div></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
     </div>`;
   }).join('');
-  m.innerHTML=`<div class="timers-wrap">${html}</div>`;
 }
 
-function renderHelp(){
-  const m=document.getElementById('main');
-  m.innerHTML=`
-    <div class="help-card"><div class="help-ttl">⭐ 5성 작물 조건</div><div class="help-row"><span class="hk">→</span>비료 1번 + 잡초 4번 제거가 필요해요.</div></div>
-    <div class="help-card"><div class="help-ttl">🌱 잡초 시점</div><div class="help-row"><span class="hk">W1/W2</span>1/3 및 2/3 지점</div><div class="help-row"><span class="hk">W3/W4</span>성숙 1분 전/후</div></div>
-    <div class="help-card"><div class="help-ttl">🔔 알림 설정</div><div class="help-row"><span class="hk">→</span>심기 시 잡초와 성숙 알림을 따로 켤 수 있어요.</div><div class="help-row"><span class="hk">→</span>브라우저를 닫으면 알림이 멈출 수 있으니 앱 설치(PWA)를 권장합니다.</div></div>
-    <div style="height:20px"></div>
-  `;
-}
+function delTimer(id){ timers=timers.filter(t=>t.id!==id); saveTimers(); renderTimers(); }
 
 async function registerSW(){
-  if(!('serviceWorker' in navigator)) return;
-  try{swReg=await navigator.serviceWorker.register('sw.js');await navigator.serviceWorker.ready;}catch(e){}
+  if('serviceWorker' in navigator) swReg=await navigator.serviceWorker.register('sw.js');
 }
+
 function sendAlarmsToSW(){
   if(!swReg||!swReg.active||!notifEnabled) return;
-  const now=Date.now();
   const alarmList=[];
   timers.forEach(t=>{
     ['w1','w2','w3','w4','mature'].forEach(s=>{
-      if(t.times[s]>now&&!t.done.includes(s)){
-        // 설정 체크
-        if((s==='mature'&&t.notifHarvest)||(s!=='mature'&&t.notifWeed)){
-          const lb=t.label?` (${t.label})`:'';
-          let title=s==='mature'?`🎉 ${t.n}${lb} 수확!`:`🌿 ${t.n}${lb} W${s.replace('w','')} 잡초!`;
-          alarmList.push({id:t.id+'_'+s,time:t.times[s],title,body:s==='mature'?'수확할 시간!':'잡초를 제거하세요!'});
+      if(t.times[s]>Date.now() && !t.done.includes(s)){
+        // SW 전송 시에도 설정 체크
+        if((s==='mature' && t.notifHarvest) || (s!=='mature' && t.notifWeed)){
+          alarmList.push({
+            id:t.id+'_'+s, time:t.times[s], 
+            title:s==='mature'?'🎉 수확 완료!':`🌿 잡초 발생!`,
+            body:t.n + (t.label?' ('+t.label+')':'')
+          });
         }
       }
     });
   });
-  swReg.active.postMessage({type:'SCHEDULE_ALARMS',alarms:alarmList});
+  swReg.active.postMessage({type:'SCHEDULE_ALARMS', alarms:alarmList});
 }
 
 loadTimers();
-registerSW().then(()=>{updNBtn();schedAlarms();sendAlarmsToSW();});
+registerSW().then(updNBtn);
 renderAdd();
-updBdg();
-setInterval(()=>{if(tab==='timers')renderTimers();},1000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){schedAlarms();sendAlarmsToSW();if(tab==='timers')renderTimers();}});
+setInterval(()=>{ if(tab==='timers') renderTimers(); }, 5000);
 </script>
 </body>
 </html>
