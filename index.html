@@ -440,9 +440,14 @@ function addTimer(){
   timers.push({id,cropId:crop.id,e:crop.e,n:crop.n,label:label.trim().slice(0,20),planted,times:calcTimes(planted,crop.m),repeat,done:[]});
   saveTimers();
   schedAlarms();
-  sendAlarmsToSW();
+  if(typeof sendAlarmsToSW==='function') sendAlarmsToSW();
   toast(`🌱 ${crop.n} 타이머 시작!`);
-  goTab('timers');
+  // 탭 전환
+  tab='timers';
+  document.getElementById('nt-add').className='nav-tab';
+  document.getElementById('nt-timers').className='nav-tab on';
+  document.getElementById('nt-help').className='nav-tab';
+  renderTimers();
 }
 
 function delTimer(id){
