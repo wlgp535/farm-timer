@@ -440,6 +440,7 @@ function addTimer(){
   timers.push({id,cropId:crop.id,e:crop.e,n:crop.n,label:label.trim().slice(0,20),planted,times:calcTimes(planted,crop.m),repeat,done:[]});
   saveTimers();
   schedAlarms();
+  sendAlarmsToSW();
   toast(`🌱 ${crop.n} 타이머 시작!`);
   goTab('timers');
 }
@@ -607,11 +608,9 @@ async function registerSW(){
   try{
     swReg = await navigator.serviceWorker.register('sw.js');
     await navigator.serviceWorker.ready;
-    console.log('SW 등록 완료');
   }catch(e){ console.warn('SW 등록 실패',e); }
 }
 
-// SW에 알람 스케줄 전송 (백그라운드 알림용)
 function sendAlarmsToSW(){
   if(!swReg||!swReg.active||!notifEnabled) return;
   const now=Date.now();
@@ -632,35 +631,15 @@ function sendAlarmsToSW(){
   swReg.active.postMessage({type:'SCHEDULE_ALARMS',alarms:alarmList});
 }
 
-// 알림 버튼: SW 등록 + 권한 요청
-async function reqNotifSW(){
-  if(!('Notification' in window)){toast('이 브라우저는 알림 미지원');return;}
-  await registerSW();
-  const p=await Notification.requestPermission();
-  updNBtn();
-  if(p==='granted'){toast('✅ 알림 허용 완료!');sendAlarmsToSW();}
-  else toast('브라우저 설정에서 알림을 허용해주세요.');
-}
-
-// schedAlarms 래핑: JS 타이머 + SW 동시 등록
-const _origSchedAlarms=schedAlarms;
-function schedAlarms(){
-  _origSchedAlarms();
-  sendAlarmsToSW();
-}
-
 // Init
 loadTimers();
-registerSW().then(()=>{
-  updNBtn();
-  schedAlarms();
-});
+registerSW().then(()=>{ updNBtn(); schedAlarms(); sendAlarmsToSW(); });
 renderAdd();
 updBdg();
 tickId=setInterval(()=>{if(tab==='timers')renderTimers();},1000);
 
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden){schedAlarms();if(tab==='timers')renderTimers();}
+  if(!document.hidden){schedAlarms();sendAlarmsToSW();if(tab==='timers')renderTimers();}
 });
 </script>
 </body>
