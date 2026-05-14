@@ -228,7 +228,7 @@ function schedAlarms(){
         alarms[t.id+'_'+s]=setTimeout(()=>{
           t.done.push(s); saveTimers();
           if(s==='mature'){
-            if(t.notifHarvest) toast(`🎉 ${t.n} 성숙 완료!`, 'harvest');
+            if(t.notifHarvest) toast(`🎉 ${t.n} 수확!`, 'harvest');
           } else {
             if(t.notifWeed) toast(`🌿 ${t.n} 잡초!`, 'weed');
           }
@@ -366,7 +366,7 @@ function sendAlarmsToSW(){
         if((s==='mature' && t.notifHarvest) || (s!=='mature' && t.notifWeed)){
           alarmList.push({
             id:t.id+'_'+s, time:t.times[s], 
-            title:s==='mature'?'🎉 성숙 완료!':`🌿 잡초 발생!`,
+            title:s==='mature'?'🎉 수확 완료!':`🌿 잡초 발생!`,
             body:t.n + (t.label?' ('+t.label+')':'')
           });
         }
