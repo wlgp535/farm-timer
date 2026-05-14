@@ -438,9 +438,10 @@ function addTimer(){
   }
   const id=Date.now()+'_'+Math.random().toString(36).substr(2,5);
   timers.push({id,cropId:crop.id,e:crop.e,n:crop.n,label:label.trim().slice(0,20),planted,times:calcTimes(planted,crop.m),repeat,done:[]});
-  saveTimers();schedAlarms();
+  saveTimers();
+  schedAlarms();
   toast(`🌱 ${crop.n} 타이머 시작!`);
-  setTimeout(()=>goTab('timers'),400);
+  goTab('timers');
 }
 
 function delTimer(id){
