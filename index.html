@@ -38,7 +38,6 @@ body{
   max-width:480px;margin:0 auto;
   position:relative;
 }
-/* 상단바 디자인 변경: 버튼 공간 제외하고 중앙 정렬 느낌으로 깔끔하게 조정 */
 .topbar{background:var(--surface);padding:calc(14px + var(--safe-top)) 16px 12px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;flex-shrink:0;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
 .topbar-title{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-0.3px;}
 .topbar-sub{font-size:11px;color:var(--text-dim);margin-top:2px;}
@@ -109,19 +108,21 @@ body{
       serviceWorkerParam: { scope: "/farm-timer/" }
     });
     
-    // 접속하자마자 알림 권한 상태 체크 후 미허용 상태라면 자동 강제 팝업 실행
-    if(OneSignal.Notifications.permission !== true) {
+    // [자동 실행 잠금] 페이지 로드 직후 알림 권한이 없으면 즉시 브라우저 순정 팝업 요청
+    if (!OneSignal.Notifications.permission) {
       try {
         await OneSignal.Notifications.requestPermission();
-      } catch(e) { console.log("자동 권한 요청 실패:", e); }
+      } catch(e) { console.log("즉시 권한 요청 제한:", e); }
     }
   });
 
-  // 사용자가 화면 아무 데나 클릭했을 때 아직 알림 미허용 상태라면 강제로 한 번 더 띄워주는 이중 잠금 장치
+  // [이중 안전장치] 사용자가 화면 어디든 터치/클릭하는 순간 권한이 없다면 즉시 순정 팝업 강제 구동
   document.addEventListener('click', function() {
     window.OneSignalDeferred.push(async function(OneSignal) {
-      if(OneSignal.Notifications.permission !== true) {
-        try { await OneSignal.Notifications.requestPermission(); } catch(e){}
+      if (!OneSignal.Notifications.permission) {
+        try { 
+          await OneSignal.Notifications.requestPermission(); 
+        } catch(e){ console.log("클릭 트리거 권한 요청 실패:", e); }
       }
     });
   }, { once: false });
@@ -444,7 +445,7 @@ function renderHelp(){
     <div class="help-card">
       <div class="help-ttl">💡 W4 잡초 꿀팁</div>
       <div class="help-row"><span class="hk">→</span>W4는 성숙 이후 자라므로, 본인 계정으로 제거하면 작물도 같이 수확돼요.</div>
-      <div class="help-row"><span class="hk">→</span>친구/부계정으로 제거하거나, 가방을 가득 채운 뒤 잡초를 먼저 제거하세요.</div>
+      <div class="help-row"><span class="hk">→</span>Clarification: 친구/부계정으로 제거하거나, 가방을 가득 채운 뒤 잡초를 먼저 제거하세요.</div>
     </div>
     <div style="height:20px"></div>
   `;
