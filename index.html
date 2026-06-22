@@ -108,6 +108,8 @@ body{
   window.OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
       appId: "91cfa552-ccc8-4746-87cd-5f9b9f4a2687",
+      serviceWorkerPath: "OneSignalSDKWorker.js",
+      serviceWorkerParam: { scope: "/farm-timer/" },
     });
     updNBtn();
   });
