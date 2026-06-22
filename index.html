@@ -102,7 +102,6 @@ body{
 .h-tip{background:var(--bg);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--text-dim);border-left:3px solid var(--amber-500);}
 </style>
 
-<!-- 원시그널 연동 전용 스크립트 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -134,6 +133,7 @@ body{
 </nav>
 
 <script>
+// 🌟 주신 원본 작물 리스트 그대로 적용 (레몬 버베나, 수박 제거 완료)
 const CROPS=[
   {id:'tomato',e:'🍅',n:'토마토',m:15},
   {id:'rice',e:'🍚',n:'벼',m:20},
@@ -374,7 +374,7 @@ function renderAdd(){
   m.innerHTML=`
     <p class="sec">🌿 작물 선택</p>
     <div class="crop-grid">${CROPS.map(c=>`
-      <div class="crop-card ${c.id===sel?'sel':''} ${c.season?'season':''}" onclick="pickCrop('${c.id}')">
+      <div class="crop-card ${c.id===sel?'sel':''}" onclick="pickCrop('${c.id}')">
         <span class="crop-emoji">${c.e}</span>
         <div class="crop-name">${c.n}</div>
         <div class="crop-dur">${fmtDur(c.m)}</div>
