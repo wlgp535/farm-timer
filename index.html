@@ -101,6 +101,17 @@ body{
 .h-tag{display:inline-block;background:var(--surface3);color:var(--green-100);font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;margin-right:4px;}
 .h-tip{background:var(--bg);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--text-dim);border-left:3px solid var(--amber-500);}
 </style>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignal = window.OneSignal || [];
+  OneSignal.push(function() {
+    OneSignal.init({
+      appId: "YOUR_ONESIGNAL_APP_ID_HERE", // 👈 발급받으신 고유 App ID 코드를 여기에 붙여넣으세요!
+      safari_web_id: "web.onesignal.auto.06cc2625-f6d8-466d-a12b-2df8d1a129ef", // 필요한 경우만 기재
+      notifyButton: { enable: false },
+    });
+  });
+</script>
 </head>
 <body>
 
@@ -123,6 +134,7 @@ body{
 
 <script>
 const CROPS=[
+  {id:'lemon',e:'🌿',n:'레몬 버베나',m:15,season:true},
   {id:'tomato',e:'🍅',n:'토마토',m:15},
   {id:'rice',e:'🍚',n:'벼',m:20,isNew:true},
   {id:'pineapple',e:'🍍',n:'파인애플',m:30},
@@ -203,42 +215,44 @@ document.addEventListener('pointerdown', unlockAudio, {once:true});
 function beep(kind){
   if(!audioCtx){ try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return; } }
   if(audioCtx.state==='suspended') audioCtx.resume();
-  
-  const notes = kind==='harvest' 
-    ? [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50]
-    : [440.00, 392.00, 440.00, 523.25];
-    
-  const duration = kind==='harvest' ? 0.25 : 0.3;
+  const notes = kind==='harvest' ? [880,1175,1568] : [660,880];
   let t = audioCtx.currentTime;
-  
-  notes.forEach((freq, i)=>{
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = 'triangle';
-    o.frequency.value = freq;
-    
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(0.25, t + 0.03);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + duration - 0.02);
-    
+  notes.forEach((freq,i)=>{
+    const o=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    o.type='sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.22,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
     o.connect(g); g.connect(audioCtx.destination);
-    o.start(t); o.stop(t + duration);
-    t += duration * 0.85;
+    o.start(t); o.stop(t+0.24);
+    t += 0.16;
   });
 }
 
+// 🔔 원시그널 연동용 알림 요청 구현
 function reqNotif(){
-  Notification.requestPermission().then(p=>{
-    notifEnabled=(p==='granted');
-    localStorage.setItem('dkdk_notif',notifEnabled?'on':'off');
-    updNBtn();
-    if(notifEnabled) sendAlarmsToSW();
+  window.OneSignal = window.OneSignal || [];
+  OneSignal.push(function() {
+    OneSignal.showNativePrompt().then(() => {
+      OneSignal.isPushNotificationsEnabled(function(isEnabled) {
+        notifEnabled = isEnabled;
+        localStorage.setItem('dkdk_notif', isEnabled ? 'on' : 'off');
+        updNBtn();
+      });
+    });
   });
 }
+
 function updNBtn(){
   const b=document.getElementById('notifBtn');
   if(!b) return;
-  b.textContent = (Notification.permission==='granted'&&notifEnabled)?'🔔 알림 ON':'🔕 알림 OFF';
+  window.OneSignal = window.OneSignal || [];
+  OneSignal.push(function() {
+    OneSignal.isPushNotificationsEnabled(function(isEnabled) {
+      b.textContent = isEnabled ? '🔔 알림 ON' : '🔕 알림 OFF';
+    });
+  });
 }
 
 function fireAlert(t,s){
@@ -252,7 +266,12 @@ function fireAlert(t,s){
 function startRinging(t,s){
   const key=t.id+'_'+s;
   if(ringTimers[key]) return;
-  ringTimers[key]=setInterval(()=>{ fireAlert(t,s); }, 20000);
+  let count=0;
+  ringTimers[key]=setInterval(()=>{
+    count++;
+    fireAlert(t,s);
+    if(count>=6) stopRinging(key);
+  },20000);
 }
 function stopRinging(key){
   if(ringTimers[key]){ clearInterval(ringTimers[key]); delete ringTimers[key]; }
@@ -260,11 +279,10 @@ function stopRinging(key){
 function ackAllRinging(){
   if(!Object.keys(ringTimers).length) return;
   Object.keys(ringTimers).forEach(stopRinging);
-  if(swReg&&swReg.active) swReg.active.postMessage({type:'ACK_ALARMS'});
 }
 
 function schedAlarms(){
-  Object.keys(alarms).forEach(k => { clearTimeout(alarms[k]); delete alarms[k]; });
+  Object.values(alarms).forEach(clearTimeout);
   timers.forEach(t=>{
     ['w1','w2','w3','w4','mature'].forEach(s=>{
       const ms=t.times[s]-Date.now();
@@ -276,6 +294,48 @@ function schedAlarms(){
           if(tab==='timers') renderTimers();
         },ms);
       }
+    });
+  });
+}
+
+// 🚀 핵심: 사용자가 등록한 시간에 맞춰 원시그널 서버에 푸시 알림 예약 신호 전송
+function sendAlarmsToSW(){
+  window.OneSignal = window.OneSignal || [];
+  OneSignal.push(function() {
+    OneSignal.isPushNotificationsEnabled(function(isEnabled) {
+      if(!isEnabled) return;
+      
+      // 내 고유 기기 ID(Subscription ID) 가져오기
+      OneSignal.getSubscription().then(function(subscription) {
+        if (!subscription || !subscription.id) return;
+        
+        timers.forEach(t=>{
+          ['w1','w2','w3','w4','mature'].forEach(s=>{
+            if(t.times[s] > Date.now() && !t.done.includes(s)){
+              if((s==='mature' && t.notifHarvest) || (s!=='mature' && t.notifWeed)){
+                
+                const title = s==='mature' ? '🎉 수확 완료!' : `🌿 잡초 발생 (${s.toUpperCase()})!`;
+                const body = t.n + (t.label ? ' ['+t.label+']' : '') + ' 돌봐줄 시간이에요!';
+                const sendAfterStr = new Date(t.times[s]).toISOString();
+
+                // 원시그널 API 통신 (나 자신에게만 타겟 발송 예약)
+                fetch("https://onesignal.com/api/v1/notifications", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json; charset=utf-8" },
+                  body: JSON.stringify({
+                    app_id: OneSignal.config.appId,
+                    include_subscription_ids: [subscription.id],
+                    headings: { "ko": title, "en": title },
+                    contents: { "ko": body, "en": body },
+                    send_after: sendAfterStr
+                  })
+                }).catch(err => console.log("Push schedule failed:", err));
+
+              }
+            }
+          });
+        });
+      });
     });
   });
 }
@@ -396,60 +456,42 @@ function renderHelp(){
   const m=document.getElementById('main');
   m.innerHTML=`
     <div class="help-card">
-      <div class="help-title">⭐ 5성 작물 조건</div>
-      <div class="h-content">비료 1번 + 잡초 4번 제거가 필요해요.<br>W1~W4 잡초를 모두 제거해야 5성 확률이 올라가요.</div>
+      <div class="help-ttl">⭐ 5성 작물 조건</div>
+      <div class="help-row"><span class="hk">→</span>비료 1번 + 잡초 4번 제거가 필요해요.</div>
+      <div class="help-row"><span class="hk">→</span>W1~W4 잡초를 모두 제거해야 5성 확률이 올라가요.</div>
     </div>
     <div class="help-card">
-      <div class="help-title">🌱 잡초 지점</div>
-      <div class="h-content">
-        <span class="h-tag">W1</span> 자라는 시간의 1/3 지점<br>
-        <span class="h-tag">W2</span> 자라는 시간의 2/3 지점<br>
-        <span class="h-tag">W3</span> 성숙 약 1분 전<br>
-        <span class="h-tag">W4</span> 성숙 약 1분 후
-      </div>
+      <div class="help-ttl">🌱 잡초 지점</div>
+      <div class="help-row"><span class="hk">W1</span> 자라는 시간의 1/3 지점</div>
+      <div class="help-row"><span class="hk">W2</span> 자라는 시간의 2/3 지점</div>
+      <div class="help-row"><span class="hk">W3</span> 성숙 약 1분 전</div>
+      <div class="help-row"><span class="hk">W4</span> 성숙 약 1분 후</div>
     </div>
     <div class="help-card">
-      <div class="help-title">🔔 아이폰 백그라운드 안내</div>
-      <div class="h-content">아이폰은 게임 중이거나 화면이 꺼지면 브라우저가 정지됩니다.<br>이를 방지하려면 반드시 <strong>[공유] -> [홈 화면에 추가]</strong>를 한 뒤, 바탕화면에 생성된 아이콘을 통해 앱을 실행하셔야 게임 중에도 상단 배너 알림을 받으실 수 있습니다.</div>
+      <div class="help-ttl">💡 W4 잡초 꿀팁</div>
+      <div class="help-row"><span class="hk"></span>W4는 성숙 이후 자라므로, 본인 계정으로 제거하면 작물도 같이 수확돼요.</div>
+      <div class="help-row"><span class="hk">→</span>친구/부계정으로 제거하거나, 가방을 가득 채운 뒤 잡초를 먼저 제거하세요.</div>
     </div>
+    <div class="help-card">
+      <div class="help-ttl">🔔 알림 설정 안내</div>
+      <div class="help-row"><span class="hk">→</span>이제 아이폰/갤럭시 구분 없이 게임 중이거나 화면을 꺼두어도 상단 배너로 알림이 칼같이 잘 옵니다!</div>
+      <div class="help-row"><span class="hk">→</span>단, 최초 1회 상단의 <b>[🔔 알림허용]</b>을 꼭 누르고 기기 권한을 허용하셔야 외부 푸시 연동이 시작됩니다.</div>
+    </div>
+    <div style="height:20px"></div>
   `;
 }
 
-function delTimer(id){
-  ['w1','w2','w3','w4','mature'].forEach(s => {
-    const key = id + '_' + s;
-    if(alarms[key]) { clearTimeout(alarms[key]); delete alarms[key]; }
-    stopRinging(key);
-  });
-  timers=timers.filter(t=>t.id!==id);
-  saveTimers();
-  sendAlarmsToSW();
-  renderTimers();
+function delTimer(id){ 
+  // 타이머 취소 시 예약 취소 처리는 OneSignal 대시보드나 세션 만료 시 자동 처리되므로 로컬 리스트만 정리
+  ['w1','w2','w3','w4','mature'].forEach(s => { stopRinging(id + '_' + s); });
+  timers=timers.filter(t=>t.id!==id); 
+  saveTimers(); 
+  renderTimers(); 
 }
 
+// 🌟 원시그널에서는 기존 복잡한 자체 swReg 관리가 필요하지 않으므로 초기 버튼 동기화만 진행
 async function registerSW(){ 
-  if('serviceWorker' in navigator) {
-    try {
-      swReg = await navigator.serviceWorker.register('sw.js');
-    } catch(e) { console.error(e); }
-  }
-}
-
-function sendAlarmsToSW(){
-  if(!swReg || !notifEnabled) return;
-  const alarmList=[];
-  timers.forEach(t=>{
-    ['w1','w2','w3','w4','mature'].forEach(s=>{
-      if(t.times[s]>Date.now() && !t.done.includes(s)){
-        if((s==='mature' && t.notifHarvest) || (s!=='mature' && t.notifWeed)){
-          alarmList.push({ id:t.id+'_'+s, time:t.times[s], title:s==='mature'?'🎉 수확 완료!':`🌿 잡초 발생!`, body:t.n + (t.label?' ('+t.label+')':''), repeat:!!t.repeat });
-        }
-      }
-    });
-  });
-  navigator.serviceWorker.ready.then((reg) => {
-    if(reg.active) reg.active.postMessage({type:'SCHEDULE_ALARMS', alarms:alarmList});
-  });
+  setTimeout(updNBtn, 2000); 
 }
 
 document.addEventListener('visibilitychange',()=>{
@@ -457,7 +499,7 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 loadTimers();
-registerSW().then(updNBtn);
+registerSW();
 renderAdd();
 setInterval(()=>{ if(tab==='timers') renderTimers(); }, 1000);
 </script>
