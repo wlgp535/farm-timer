@@ -102,14 +102,14 @@ body{
 .h-tip{background:var(--bg);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--text-dim);border-left:3px solid var(--amber-500);}
 </style>
 
+<!-- 원시그널 연동 전용 스크립트 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   window.OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
-      appId: "91cfa552-ccc8-4746-87cd-5f9b9f4a2687", // 👈 발급된 App ID 연동 완료!
+      appId: "91cfa552-ccc8-4746-87cd-5f9b9f4a2687",
     });
-    // 알림 버튼 텍스트 최신 동기화
     updNBtn();
   });
 </script>
@@ -134,10 +134,11 @@ body{
 </nav>
 
 <script>
+// 🌟 레몬 버베나를 지우고 실제 두두타 작물 목록 및 계절 수박 추가!
 const CROPS=[
-  {id:'lemon',e:'🌿',n:'레몬 버베나',m:15,season:true},
+  {id:'watermelon',e:'🍉',n:'[계절] 수박',m:25,season:true},
   {id:'tomato',e:'🍅',n:'토마토',m:15},
-  {id:'rice',e:'🍚',n:'벼',m:20,isNew:true},
+  {id:'rice',e:'🍚',n:'벼',m:20},
   {id:'pineapple',e:'🍍',n:'파인애플',m:30},
   {id:'tea',e:'🍵',n:'찻잎',m:45},
   {id:'potato',e:'🥔',n:'감자',m:60},
@@ -231,7 +232,6 @@ function beep(kind){
   });
 }
 
-// 🔔 원시그널 통합 알림 수락 요청 로직
 function reqNotif(){
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   window.OneSignalDeferred.push(async function(OneSignal) {
@@ -300,13 +300,10 @@ function schedAlarms(){
   });
 }
 
-// 🚀 핵심 기능: 내 기기 토큰값을 뽑아 원시그널 서버에 정밀 타겟형 예약 푸시 발송
 function sendAlarmsToSW(){
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   window.OneSignalDeferred.push(function(OneSignal) {
     if (!OneSignal.Notifications.permission) return;
-    
-    // 현재 기기의 원시그널 고유 아이디 추출
     const subscriptionId = OneSignal.User.PushSubscription.id;
     if (!subscriptionId) return;
     
@@ -314,12 +311,10 @@ function sendAlarmsToSW(){
       ['w1','w2','w3','w4','mature'].forEach(s=>{
         if(t.times[s] > Date.now() && !t.done.includes(s)){
           if((s==='mature' && t.notifHarvest) || (s!=='mature' && t.notifWeed)){
-            
             const title = s==='mature' ? '🎉 수확 완료!' : `🌿 잡초 발생 (${s.toUpperCase()})!`;
             const body = t.n + (t.label ? ' ['+t.label+']' : '') + ' 돌봐줄 시간이에요!';
             const sendAfterStr = new Date(t.times[s]).toISOString();
 
-            // 백그라운드용 푸시 알림 예약 전송
             fetch("https://onesignal.com/api/v1/notifications", {
               method: "POST",
               headers: { "Content-Type": "application/json; charset=utf-8" },
@@ -330,8 +325,7 @@ function sendAlarmsToSW(){
                 contents: { "ko": body, "en": body },
                 send_after: sendAfterStr
               })
-            }).catch(err => console.log("Push schedule error:", err));
-
+            }).catch(err => console.log("Push error:", err));
           }
         }
       });
@@ -383,7 +377,6 @@ function renderAdd(){
     <p class="sec">🌿 작물 선택</p>
     <div class="crop-grid">${CROPS.map(c=>`
       <div class="crop-card ${c.id===sel?'sel':''} ${c.season?'season':''}" onclick="pickCrop('${c.id}')">
-        ${c.isNew?'<span class="crop-badge">NEW</span>':''}
         <span class="crop-emoji">${c.e}</span>
         <div class="crop-name">${c.n}</div>
         <div class="crop-dur">${fmtDur(c.m)}</div>
@@ -473,7 +466,7 @@ function renderHelp(){
     </div>
     <div class="help-card">
       <div class="help-ttl">🔔 알림 설정 안내</div>
-      <div class="help-row"><span class="hk">→</span>이제 아이폰·갤럭시 구분 없이 앱이 꺼져있거나 게임 중이어도 배너 알림이 칼같이 들어옵니다!</div>
+      <div class="help-row"><span class="hk">→</span>이제 앱이 꺼져있거나 게임 중이어도 배너 알림이 칼같이 들어옵니다!</div>
       <div class="help-row"><span class="hk">→</span>단, 최초 1회 상단의 <b>[🔔 알림허용]</b> 버튼을 누르고 기기 팝업 권한을 꼭 수락해 주셔야 합니다.</div>
     </div>
     <div style="height:20px"></div>
@@ -487,7 +480,6 @@ function delTimer(id){
   renderTimers(); 
 }
 
-// 🌟 서비스 워커 관리 간소화 (원시그널 SDK 내부 처리 연동)
 async function registerSW(){ 
   setTimeout(updNBtn, 1500); 
 }
