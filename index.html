@@ -51,7 +51,7 @@ body{
 .crop-card.sel{border-color:var(--green-300);background:var(--surface2);box-shadow:0 0 0 2px var(--green-400);}
 .crop-card.season{border-color:var(--amber-600);}
 .crop-badge{position:absolute;top:6px;right:6px;background:var(--amber-500);color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:6px;letter-spacing:0.04em;}
-.crop-emoji{font-size:30px;line-height:1;display:block;margin-bottom:6px;}
+.crop-emoji覆{font-size:30px;line-height:1;display:block;margin-bottom:6px;}
 .crop-name{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;}
 .crop-dur{font-size:11px;color:var(--text-muted);}
 .form-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;}
@@ -96,12 +96,12 @@ body{
 .toast.weed{background:var(--amber-800);border-color:var(--amber-400);}
 .toast.harvest{background:var(--green-600);border-color:var(--green-200);}
 .help-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;line-height:1.6;}
-.h-title{font-size:15px;font-weight:800;color:var(--amber-300);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-.h-content{font-size:13px;color:var(--text-muted);}
-.h-tag{display:inline-block;background:var(--surface3);color:var(--green-100);font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;margin-right:4px;}
-.h-tip{background:var(--bg);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--text-dim);border-left:3px solid var(--amber-500);}
+.help-ttl{font-size:15px;font-weight:800;color:var(--amber-300);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.help-row{font-size:13px;color:var(--text-muted);margin-bottom:6px;}
+.hk{display:inline-block;background:var(--surface3);color:var(--green-100);font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;margin-right:6px;}
 </style>
 
+<!-- 원시그널 SDK 로드 및 연동 스크립트 수정 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -109,10 +109,56 @@ body{
     await OneSignal.init({
       appId: "91cfa552-ccc8-4746-87cd-5f9b9f4a2687",
       serviceWorkerPath: "OneSignalSDKWorker.js",
-      serviceWorkerParam: { scope: "/farm-timer/" },
+      serviceWorkerParam: { scope: "/farm-timer/" }
     });
+    
+    // 알림 권한 상태가 변경될 때 버튼 디자인 실시간 업데이트
+    OneSignal.Notifications.addEventListener("permissionChange", function(permission) {
+      updNBtn();
+    });
+    
     updNBtn();
   });
+
+  // 버튼 강제 요청 함수 수정 (안 눌리는 문제 해결)
+  async function reqNotif(){
+    if (window.OneSignal) {
+      try {
+        await window.OneSignal.Notifications.requestPermission();
+        updNBtn();
+      } catch(e) {
+        alert("알림 권한 요청 중 오류 발생: " + e);
+      }
+    } else {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.Notifications.requestPermission();
+        updNBtn();
+      });
+    }
+  }
+
+  function updNBtn(){
+    const b = document.getElementById('notifBtn');
+    if(!b) return;
+    
+    const checkPerm = function(OneSignal) {
+      const isGranted = OneSignal.Notifications.permission;
+      b.textContent = isGranted ? '🔔 알림 ON' : '🔕 알림 OFF';
+      if(isGranted) {
+        b.classList.add('granted');
+      } else {
+        b.classList.remove('granted');
+      }
+    };
+
+    if (window.OneSignal) {
+      checkPerm(window.OneSignal);
+    } else {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.OneSignalDeferred.push(checkPerm);
+    }
+  }
 </script>
 </head>
 <body>
@@ -135,7 +181,6 @@ body{
 </nav>
 
 <script>
-// 🌟 주신 원본 작물 리스트 그대로 적용 (레몬 버베나, 수박 제거 완료)
 const CROPS=[
   {id:'tomato',e:'🍅',n:'토마토',m:15},
   {id:'rice',e:'🍚',n:'벼',m:20},
@@ -163,8 +208,6 @@ let globalNotifHarvest = true;
 let alarms={};
 let ringTimers={};
 let audioCtx=null;
-let swReg=null;
-let notifEnabled=localStorage.getItem('dkdk_notif')!=='off';
 
 function loadTimers(){
   const d=localStorage.getItem('dkdk5_timers');
@@ -229,31 +272,6 @@ function beep(kind){
     o.connect(g); g.connect(audioCtx.destination);
     o.start(t); o.stop(t+0.24);
     t += 0.16;
-  });
-}
-
-function reqNotif(){
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  window.OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.Notifications.requestPermission();
-    notifEnabled = OneSignal.Notifications.permission;
-    localStorage.setItem('dkdk_notif', notifEnabled ? 'on' : 'off');
-    updNBtn();
-  });
-}
-
-function updNBtn(){
-  const b=document.getElementById('notifBtn');
-  if(!b) return;
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  window.OneSignalDeferred.push(function(OneSignal) {
-    const isGranted = OneSignal.Notifications.permission;
-    b.textContent = isGranted ? '🔔 알림 ON' : '🔕 알림 OFF';
-    if(isGranted) {
-      b.classList.add('granted');
-    } else {
-      b.classList.remove('granted');
-    }
   });
 }
 
@@ -461,7 +479,7 @@ function renderHelp(){
     </div>
     <div class="help-card">
       <div class="help-ttl">💡 W4 잡초 꿀팁</div>
-      <div class="help-row"><span class="hk"></span>W4는 성숙 이후 자라므로, 본인 계정으로 제거하면 작물도 같이 수확돼요.</div>
+      <div class="help-row"><span class="hk">→</span>W4는 성숙 이후 자라므로, 본인 계정으로 제거하면 작물도 같이 수확돼요.</div>
       <div class="help-row"><span class="hk">→</span>친구/부계정으로 제거하거나, 가방을 가득 채운 뒤 잡초를 먼저 제거하세요.</div>
     </div>
     <div class="help-card">
@@ -480,16 +498,11 @@ function delTimer(id){
   renderTimers(); 
 }
 
-async function registerSW(){ 
-  setTimeout(updNBtn, 1500); 
-}
-
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible' && tab==='timers') ackAllRinging();
 });
 
 loadTimers();
-registerSW();
 renderAdd();
 setInterval(()=>{ if(tab==='timers') renderTimers(); }, 1000);
 </script>
