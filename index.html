@@ -38,20 +38,18 @@ body{
   max-width:480px;margin:0 auto;
   position:relative;
 }
-.topbar{background:var(--surface);padding:calc(14px + var(--safe-top)) 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+/* 상단바 디자인 변경: 버튼 공간 제외하고 중앙 정렬 느낌으로 깔끔하게 조정 */
+.topbar{background:var(--surface);padding:calc(14px + var(--safe-top)) 16px 12px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;flex-shrink:0;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
 .topbar-title{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-0.3px;}
 .topbar-sub{font-size:11px;color:var(--text-dim);margin-top:2px;}
-.notif-btn{background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:8px 14px;color:var(--text-muted);font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
-.notif-btn.granted{background:var(--green-500);border-color:var(--green-300);color:#fff;}
 .main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px;}
 .main::-webkit-scrollbar{display:none;}
 .sec{font-size:11px;font-weight:800;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin:0 0 10px 2px;}
 .crop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:18px;}
 .crop-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:13px 11px 11px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;user-select:none;}
 .crop-card.sel{border-color:var(--green-300);background:var(--surface2);box-shadow:0 0 0 2px var(--green-400);}
-.crop-card.season{border-color:var(--amber-600);}
 .crop-badge{position:absolute;top:6px;right:6px;background:var(--amber-500);color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:6px;letter-spacing:0.04em;}
-.crop-emoji覆{font-size:30px;line-height:1;display:block;margin-bottom:6px;}
+.crop-emoji{font-size:30px;line-height:1;display:block;margin-bottom:6px;}
 .crop-name{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;}
 .crop-dur{font-size:11px;color:var(--text-muted);}
 .form-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;}
@@ -101,7 +99,6 @@ body{
 .hk{display:inline-block;background:var(--surface3);color:var(--green-100);font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;margin-right:6px;}
 </style>
 
-<!-- 원시그널 SDK 로드 및 연동 스크립트 수정 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -112,63 +109,29 @@ body{
       serviceWorkerParam: { scope: "/farm-timer/" }
     });
     
-    // 알림 권한 상태가 변경될 때 버튼 디자인 실시간 업데이트
-    OneSignal.Notifications.addEventListener("permissionChange", function(permission) {
-      updNBtn();
-    });
-    
-    updNBtn();
+    // 접속하자마자 알림 권한 상태 체크 후 미허용 상태라면 자동 강제 팝업 실행
+    if(OneSignal.Notifications.permission !== true) {
+      try {
+        await OneSignal.Notifications.requestPermission();
+      } catch(e) { console.log("자동 권한 요청 실패:", e); }
+    }
   });
 
-  // 버튼 강제 요청 함수 수정 (안 눌리는 문제 해결)
-  async function reqNotif(){
-    if (window.OneSignal) {
-      try {
-        await window.OneSignal.Notifications.requestPermission();
-        updNBtn();
-      } catch(e) {
-        alert("알림 권한 요청 중 오류 발생: " + e);
+  // 사용자가 화면 아무 데나 클릭했을 때 아직 알림 미허용 상태라면 강제로 한 번 더 띄워주는 이중 잠금 장치
+  document.addEventListener('click', function() {
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      if(OneSignal.Notifications.permission !== true) {
+        try { await OneSignal.Notifications.requestPermission(); } catch(e){}
       }
-    } else {
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      window.OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.Notifications.requestPermission();
-        updNBtn();
-      });
-    }
-  }
-
-  function updNBtn(){
-    const b = document.getElementById('notifBtn');
-    if(!b) return;
-    
-    const checkPerm = function(OneSignal) {
-      const isGranted = OneSignal.Notifications.permission;
-      b.textContent = isGranted ? '🔔 알림 ON' : '🔕 알림 OFF';
-      if(isGranted) {
-        b.classList.add('granted');
-      } else {
-        b.classList.remove('granted');
-      }
-    };
-
-    if (window.OneSignal) {
-      checkPerm(window.OneSignal);
-    } else {
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      window.OneSignalDeferred.push(checkPerm);
-    }
-  }
+    });
+  }, { once: false });
 </script>
 </head>
 <body>
 
 <div class="topbar">
-  <div>
-    <div class="topbar-title">🌻 두두타 잡초 타이머</div>
-    <div class="topbar-sub">비료 1번 + 잡초 4번 = ⭐⭐⭐⭐⭐</div>
-  </div>
-  <button class="notif-btn" id="notifBtn" onclick="reqNotif()">🔔 알림허용</button>
+  <div class="topbar-title">🌻 두두타 잡초 타이머</div>
+  <div class="topbar-sub">비료 1번 + 잡초 4번 = ⭐⭐⭐⭐⭐</div>
 </div>
 
 <div class="toast-wrap" id="toasts"></div>
@@ -320,7 +283,7 @@ function schedAlarms(){
 
 function sendAlarmsToSW(){
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  window.OneSignalDeferred.push(function(OneSignal) {
+  window.OneSignalDeferred.push(async function(OneSignal) {
     if (!OneSignal.Notifications.permission) return;
     const subscriptionId = OneSignal.User.PushSubscription.id;
     if (!subscriptionId) return;
@@ -330,7 +293,7 @@ function sendAlarmsToSW(){
         if(t.times[s] > Date.now() && !t.done.includes(s)){
           if((s==='mature' && t.notifHarvest) || (s!=='mature' && t.notifWeed)){
             const title = s==='mature' ? '🎉 수확 완료!' : `🌿 잡초 발생 (${s.toUpperCase()})!`;
-            const body = t.n + (t.label ? ' ['+t.label+']' : '') + ' 돌봐줄 시간이에요!';
+            const body = `${t.n}${t.label ? ' ['+t.label+']' : ''} 돌봐줄 시간이에요!`;
             const sendAfterStr = new Date(t.times[s]).toISOString();
 
             fetch("https://onesignal.com/api/v1/notifications", {
@@ -339,11 +302,12 @@ function sendAlarmsToSW(){
               body: JSON.stringify({
                 app_id: "91cfa552-ccc8-4746-87cd-5f9b9f4a2687",
                 include_subscription_ids: [subscriptionId],
-                headings: { "ko": title, "en": title },
-                contents: { "ko": body, "en": body },
-                send_after: sendAfterStr
+                headings: { "ko": title },
+                contents: { "ko": body },
+                send_after: sendAfterStr,
+                priority: 10
               })
-            }).catch(err => console.log("Push error:", err));
+            }).catch(err => console.log(err));
           }
         }
       });
@@ -481,11 +445,6 @@ function renderHelp(){
       <div class="help-ttl">💡 W4 잡초 꿀팁</div>
       <div class="help-row"><span class="hk">→</span>W4는 성숙 이후 자라므로, 본인 계정으로 제거하면 작물도 같이 수확돼요.</div>
       <div class="help-row"><span class="hk">→</span>친구/부계정으로 제거하거나, 가방을 가득 채운 뒤 잡초를 먼저 제거하세요.</div>
-    </div>
-    <div class="help-card">
-      <div class="help-ttl">🔔 알림 설정 안내</div>
-      <div class="help-row"><span class="hk">→</span>이제 앱이 꺼져있거나 게임 중이어도 배너 알림이 칼같이 들어옵니다!</div>
-      <div class="help-row"><span class="hk">→</span>단, 최초 1회 상단의 <b>[🔔 알림허용]</b> 버튼을 누르고 기기 팝업 권한을 꼭 수락해 주셔야 합니다.</div>
     </div>
     <div style="height:20px"></div>
   `;
