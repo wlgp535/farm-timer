@@ -101,15 +101,16 @@ body{
 .h-tag{display:inline-block;background:var(--surface3);color:var(--green-100);font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;margin-right:4px;}
 .h-tip{background:var(--bg);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--text-dim);border-left:3px solid var(--amber-500);}
 </style>
+
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
-  window.OneSignal = window.OneSignal || [];
-  OneSignal.push(function() {
-    OneSignal.init({
-      appId: "YOUR_ONESIGNAL_APP_ID_HERE", // 👈 발급받으신 고유 App ID 코드를 여기에 붙여넣으세요!
-      safari_web_id: "web.onesignal.auto.06cc2625-f6d8-466d-a12b-2df8d1a129ef", // 필요한 경우만 기재
-      notifyButton: { enable: false },
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "91cfa552-ccc8-4746-87cd-5f9b9f4a2687", // 👈 발급된 App ID 연동 완료!
     });
+    // 알림 버튼 텍스트 최신 동기화
+    updNBtn();
   });
 </script>
 </head>
@@ -230,28 +231,29 @@ function beep(kind){
   });
 }
 
-// 🔔 원시그널 연동용 알림 요청 구현
+// 🔔 원시그널 통합 알림 수락 요청 로직
 function reqNotif(){
-  window.OneSignal = window.OneSignal || [];
-  OneSignal.push(function() {
-    OneSignal.showNativePrompt().then(() => {
-      OneSignal.isPushNotificationsEnabled(function(isEnabled) {
-        notifEnabled = isEnabled;
-        localStorage.setItem('dkdk_notif', isEnabled ? 'on' : 'off');
-        updNBtn();
-      });
-    });
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.Notifications.requestPermission();
+    notifEnabled = OneSignal.Notifications.permission;
+    localStorage.setItem('dkdk_notif', notifEnabled ? 'on' : 'off');
+    updNBtn();
   });
 }
 
 function updNBtn(){
   const b=document.getElementById('notifBtn');
   if(!b) return;
-  window.OneSignal = window.OneSignal || [];
-  OneSignal.push(function() {
-    OneSignal.isPushNotificationsEnabled(function(isEnabled) {
-      b.textContent = isEnabled ? '🔔 알림 ON' : '🔕 알림 OFF';
-    });
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(function(OneSignal) {
+    const isGranted = OneSignal.Notifications.permission;
+    b.textContent = isGranted ? '🔔 알림 ON' : '🔕 알림 OFF';
+    if(isGranted) {
+      b.classList.add('granted');
+    } else {
+      b.classList.remove('granted');
+    }
   });
 }
 
@@ -298,43 +300,40 @@ function schedAlarms(){
   });
 }
 
-// 🚀 핵심: 사용자가 등록한 시간에 맞춰 원시그널 서버에 푸시 알림 예약 신호 전송
+// 🚀 핵심 기능: 내 기기 토큰값을 뽑아 원시그널 서버에 정밀 타겟형 예약 푸시 발송
 function sendAlarmsToSW(){
-  window.OneSignal = window.OneSignal || [];
-  OneSignal.push(function() {
-    OneSignal.isPushNotificationsEnabled(function(isEnabled) {
-      if(!isEnabled) return;
-      
-      // 내 고유 기기 ID(Subscription ID) 가져오기
-      OneSignal.getSubscription().then(function(subscription) {
-        if (!subscription || !subscription.id) return;
-        
-        timers.forEach(t=>{
-          ['w1','w2','w3','w4','mature'].forEach(s=>{
-            if(t.times[s] > Date.now() && !t.done.includes(s)){
-              if((s==='mature' && t.notifHarvest) || (s!=='mature' && t.notifWeed)){
-                
-                const title = s==='mature' ? '🎉 수확 완료!' : `🌿 잡초 발생 (${s.toUpperCase()})!`;
-                const body = t.n + (t.label ? ' ['+t.label+']' : '') + ' 돌봐줄 시간이에요!';
-                const sendAfterStr = new Date(t.times[s]).toISOString();
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(function(OneSignal) {
+    if (!OneSignal.Notifications.permission) return;
+    
+    // 현재 기기의 원시그널 고유 아이디 추출
+    const subscriptionId = OneSignal.User.PushSubscription.id;
+    if (!subscriptionId) return;
+    
+    timers.forEach(t=>{
+      ['w1','w2','w3','w4','mature'].forEach(s=>{
+        if(t.times[s] > Date.now() && !t.done.includes(s)){
+          if((s==='mature' && t.notifHarvest) || (s!=='mature' && t.notifWeed)){
+            
+            const title = s==='mature' ? '🎉 수확 완료!' : `🌿 잡초 발생 (${s.toUpperCase()})!`;
+            const body = t.n + (t.label ? ' ['+t.label+']' : '') + ' 돌봐줄 시간이에요!';
+            const sendAfterStr = new Date(t.times[s]).toISOString();
 
-                // 원시그널 API 통신 (나 자신에게만 타겟 발송 예약)
-                fetch("https://onesignal.com/api/v1/notifications", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json; charset=utf-8" },
-                  body: JSON.stringify({
-                    app_id: OneSignal.config.appId,
-                    include_subscription_ids: [subscription.id],
-                    headings: { "ko": title, "en": title },
-                    contents: { "ko": body, "en": body },
-                    send_after: sendAfterStr
-                  })
-                }).catch(err => console.log("Push schedule failed:", err));
+            // 백그라운드용 푸시 알림 예약 전송
+            fetch("https://onesignal.com/api/v1/notifications", {
+              method: "POST",
+              headers: { "Content-Type": "application/json; charset=utf-8" },
+              body: JSON.stringify({
+                app_id: "91cfa552-ccc8-4746-87cd-5f9b9f4a2687",
+                include_subscription_ids: [subscriptionId],
+                headings: { "ko": title, "en": title },
+                contents: { "ko": body, "en": body },
+                send_after: sendAfterStr
+              })
+            }).catch(err => console.log("Push schedule error:", err));
 
-              }
-            }
-          });
-        });
+          }
+        }
       });
     });
   });
@@ -474,24 +473,23 @@ function renderHelp(){
     </div>
     <div class="help-card">
       <div class="help-ttl">🔔 알림 설정 안내</div>
-      <div class="help-row"><span class="hk">→</span>이제 아이폰/갤럭시 구분 없이 게임 중이거나 화면을 꺼두어도 상단 배너로 알림이 칼같이 잘 옵니다!</div>
-      <div class="help-row"><span class="hk">→</span>단, 최초 1회 상단의 <b>[🔔 알림허용]</b>을 꼭 누르고 기기 권한을 허용하셔야 외부 푸시 연동이 시작됩니다.</div>
+      <div class="help-row"><span class="hk">→</span>이제 아이폰·갤럭시 구분 없이 앱이 꺼져있거나 게임 중이어도 배너 알림이 칼같이 들어옵니다!</div>
+      <div class="help-row"><span class="hk">→</span>단, 최초 1회 상단의 <b>[🔔 알림허용]</b> 버튼을 누르고 기기 팝업 권한을 꼭 수락해 주셔야 합니다.</div>
     </div>
     <div style="height:20px"></div>
   `;
 }
 
 function delTimer(id){ 
-  // 타이머 취소 시 예약 취소 처리는 OneSignal 대시보드나 세션 만료 시 자동 처리되므로 로컬 리스트만 정리
   ['w1','w2','w3','w4','mature'].forEach(s => { stopRinging(id + '_' + s); });
   timers=timers.filter(t=>t.id!==id); 
   saveTimers(); 
   renderTimers(); 
 }
 
-// 🌟 원시그널에서는 기존 복잡한 자체 swReg 관리가 필요하지 않으므로 초기 버튼 동기화만 진행
+// 🌟 서비스 워커 관리 간소화 (원시그널 SDK 내부 처리 연동)
 async function registerSW(){ 
-  setTimeout(updNBtn, 2000); 
+  setTimeout(updNBtn, 1500); 
 }
 
 document.addEventListener('visibilitychange',()=>{
